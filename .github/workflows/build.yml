@@ -361,7 +361,7 @@ jobs:
           ### 🎨 Icon Support
           EXE file đã được gắn icon Facebook (facebook.ico)
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.TOOL_CHANGEVIA_PRO }}
 
   auto-release:
     runs-on: ubuntu-latest
@@ -373,7 +373,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.PAT_TOKEN }}
+        token: ${{ secrets.TOOL_CHANGEVIA_PRO }}
         
     - name: Get next version
       id: version
