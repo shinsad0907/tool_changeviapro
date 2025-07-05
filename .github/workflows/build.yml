@@ -37,9 +37,9 @@ jobs:
     - name: Build application (folder mode)
       run: |
         # Kiem tra xem co file facebook.ico trong folder logo khong
-        if (Test-Path "logo/facebook.ico") {
+        if (Test-Path "web/logo/facebook.ico") {
           Write-Host "[SUCCESS] Found facebook.ico in logo folder, building with icon..."
-          pyinstaller --onedir --windowed --icon="logo/facebook.ico" --name="Change Via Pro" app.py
+          pyinstaller --onedir --windowed --icon="web/logo/facebook.ico" --name="Change Via Pro" app.py
         } else {
           Write-Host "[WARNING] facebook.ico not found in logo folder, building without icon..."
           pyinstaller --onedir --windowed --name="Change Via Pro" app.py
@@ -90,8 +90,8 @@ jobs:
       
     - name: Copy icon file to dist folder
       run: |
-        if (Test-Path "logo/facebook.ico") {
-          Copy-Item "logo/facebook.ico" "dist/Change Via Pro/facebook.ico"
+        if (Test-Path "web/logo/facebook.ico") {
+          Copy-Item "web/logo/facebook.ico" "dist/Change Via Pro/facebook.ico"
           Write-Host "[SUCCESS] Copied facebook.ico from logo folder to dist folder"
         } else {
           Write-Host "[WARNING] facebook.ico not found in logo folder, skipping copy"
@@ -390,7 +390,7 @@ jobs:
           để đảm bảo ứng dụng có thể truy cập được khi chạy exe.
           
           ### 🎨 Icon Support
-          EXE file đã được gắn icon Facebook (từ thư mục logo/facebook.ico)
+          EXE file đã được gắn icon Facebook (từ thư mục web/logo/facebook.ico)
           
           ### 📄 Configuration
           - File `config.json` nằm trong thư mục `data/`
