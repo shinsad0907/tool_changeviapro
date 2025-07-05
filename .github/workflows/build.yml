@@ -98,12 +98,13 @@ jobs:
         }
       shell: powershell
       
-    - name: Get Product ID from config.json
+        - name: Get Product ID from config.json
       id: get-product-id
       run: |
-        # Kiểm tra config.json trong _internal trước, sau đó root
+        # Kiểm tra config.json trong data trước, sau đó root
         $configPaths = @(
-          "dist/MyApp/_internal/config.json",
+          "dist/MyApp/data/config.json",
+          "data/config.json",
           "config.json"
         )
         
@@ -115,14 +116,14 @@ jobs:
             $productId = $config.id
             if ($productId) {
               echo "product-id=$productId" >> $env:GITHUB_OUTPUT
-            echo "[SUCCESS] Product ID: $productId"
+              Write-Host "[SUCCESS] Product ID: $productId"
               break
             }
           }
         }
         
         if (-not $productId) {
-          echo "[ERROR] No Product ID found in any config.json"
+          Write-Host "[ERROR] No Product ID found in any config.json"
           exit 1
         }
       shell: powershell
