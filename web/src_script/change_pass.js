@@ -364,15 +364,49 @@ function updateAccountStatus(uid, statusText, color) {
         return;
     }
 }
+function exportData() {
+    // Lấy các dòng được tích checkbox
+    const checkedRows = Array.from(document.querySelectorAll('#account-tbody .row-checkbox:checked'));
+    if (checkedRows.length === 0) {
+        alert('Vui lòng chọn ít nhất một tài khoản để xuất!');
+        return;
+    }
 
+    // Lấy dữ liệu từng dòng, chỉ lấy cột 2,3,4,5 (tds[1] đến tds[4]), ngăn cách bởi |
+    const lines = checkedRows.map(cb => {
+        const tds = cb.closest('tr').querySelectorAll('td');
+        // tds[1]: STT, tds[2]: UID, tds[3]: COOKIE, tds[4]: EMAIL
+        const values = [
+            tds[2]?.textContent.trim() || "",
+            tds[3]?.textContent.trim() || "",
+            tds[4]?.textContent.trim() || "",
+            tds[5]?.textContent.trim() || ""
+        ];
+        return values.join('|');
+    });
+
+    // Gửi sang Python để lưu file
+    eel.save_exported_accounts(lines)(function(result) {
+        if (result && result.success) {
+            alert('Xuất file thành công!');
+        } else if (result && result.cancelled) {
+            // Người dùng bấm Cancel
+        } else {
+            alert('Có lỗi khi lưu file!');
+        }
+    });
+}
 // Sửa function onGetCookie
 eel.expose(onGetCookie);
-function onGetCookie(uid, cookies) {
+function onGetCookie(uid, newPass, cookies) {
     console.log(`Received cookies for ${uid}:`, cookies); // Debug log
     const rows = document.querySelectorAll('#account-tbody tr');
     rows.forEach(row => {
         const tds = row.querySelectorAll('td');
         if (tds[2] && tds[2].textContent.trim() === String(uid)) {
+            // Cập nhật cột PASS (tds[5])
+            if (newPass) tds[5].textContent = newPass;
+
             // Chuyển cookies thành string
             const cookieStr = cookies.map(c => `${c.name}=${c.value}`).join('; ');
             tds[3].textContent = cookieStr;
@@ -406,9 +440,4 @@ function stopProcess() {
     eel.stop_all_selenium();
     const stopBtn = document.querySelector('.btn-stop');
     if (stopBtn) stopBtn.disabled = true;
-}
-
-function exportData() {
-    // Implement export logic if needed
-    alert('Export data');
 }

@@ -11,7 +11,7 @@ from selenium.webdriver.chrome.options import Options
 import string
 
 chrome_drivers = {}
-
+uid_to_pass = {}  # Đặt ở đầu file hoặc nơi phù hợp
 class main:
     def __init__(self, data_change_pass, index=0):
         self.index = index
@@ -60,7 +60,6 @@ class main:
         self.generated_pass = (
             tao_mat_khau() if data_change_pass['type_password'] == 2 else data_change_pass['password']
         )
-    
     def wait_and_click(self, xpath, timeout=60):
         element = WebDriverWait(self.driver, timeout).until(
             EC.element_to_be_clickable((By.XPATH, xpath))
@@ -95,6 +94,7 @@ class main:
     def changepass(self, account):
         chrome_drivers[account['uid']] = self.driver
         self.account = account
+        uid_to_pass[account['uid']] = self.generated_pass
         self.driver.get("https://m.facebook.com/login/identify/")
         eel.updateAccountStatus(account['uid'], "🔄 Đang xử lý...", "#dcdcaa")
         try:
@@ -111,7 +111,7 @@ class main:
                 sleep(20)
                 cookies = self.get_cookies()
                 # Gọi callback để cập nhật UI
-                eel.onGetCookie(account['uid'], cookies)
+                eel.onGetCookie(account['uid'], self.generated_pass, cookies)
                 self.driver.quit()
                 chrome_drivers.pop(account['uid'], None)
                 return True, self.generated_pass, cookies
@@ -145,8 +145,10 @@ def get_cookie_by_uid(uid):
         try:
             # Lấy cookie
             cookies = driver.get_cookies()
+            # Lấy mật khẩu mới đã lưu (nếu có)
+            new_pass = uid_to_pass.get(uid, "")
             # Gọi callback để cập nhật UI trước khi đóng driver
-            eel.onGetCookie(uid, cookies)
+            eel.onGetCookie(uid, new_pass, cookies)
             # Đóng driver
             driver.quit()
             chrome_drivers.pop(uid, None)
