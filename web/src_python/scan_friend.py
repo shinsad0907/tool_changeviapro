@@ -71,6 +71,15 @@ class main_scan_friend:
             return element.text
         except:
             return None
+        
+    def wait_and_click(self, xpath, timeout=30):
+        try:
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable((By.XPATH, xpath))
+            )
+            element.click()
+        except Exception as e:
+            print(f"Lỗi khi click vào {xpath}: {e}")
 
     
     def open_friend_list(self, uid):
@@ -82,7 +91,7 @@ class main_scan_friend:
 
     def get_friend_from_source(self, source):
         try:
-            return source.split('[{"length":1,"offset":0,"inline_style":"BOLD"}],"aggregated_ranges":[],"ranges":[],"color_ranges":[],"text":"')[1].split(' znajomy"')[0]
+            return source.split('[{"length":1,"offset":0,"inline_style":"BOLD"}],"aggregated_ranges":[],"ranges":[],"color_ranges":[],"text":"')[1].split(' znajomi"}')[0]
         except:
             return "UNKNOWN"
 
@@ -112,14 +121,11 @@ def thread_scan_friend(data_scan_friend):
         if acc.get('cookie'):
             cookies = convert_cookie_string_to_list(acc['cookie'])
             instance.login(cookies)
-            time.sleep(2)
 
         for uid in uid_sublist:
             try:
                 print(f"[Thread {idx}] Đang mở bạn bè UID: {uid}")
                 instance.open_friend_list(uid)
-                time.sleep(2)
-
                 # Kiểm tra trang die
                 check_xpath = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[1]/div[2]/div[1]/h2/span"
                 text_check = instance.wait_and_get_text(check_xpath, timeout=5)
@@ -134,12 +140,11 @@ def thread_scan_friend(data_scan_friend):
                 if friend == "UNKNOWN":
                     eel.statusscan(uid, '000', "#4ec9b0")  # Không có bạn bè
                 else:
-                    eel.updateAccountStatus(uid, friend, "#4ec9b0")
+                    eel.statusscan(uid, friend, "#4ec9b0")
 
             except Exception as e:
                 print(f"[Thread {idx}] Lỗi xử lý UID {uid}: {e}")
                 eel.statusscan(uid, 'ERR', "#f44747")
-            time.sleep(delay)
 
 
     # Tạo luồng ứng với mỗi account
