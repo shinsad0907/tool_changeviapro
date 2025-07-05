@@ -98,7 +98,7 @@ jobs:
         }
       shell: powershell
       
-        - name: Get Product ID from config.json
+    - name: Get Product ID from config.json
       id: get-product-id
       run: |
         # Kiểm tra config.json trong data trước, sau đó root
