@@ -607,3 +607,13 @@ body {
 .get-cookie-btn:hover {
     background: #1086d3;
 }
+/* Đảm bảo phần scan-friend xếp ngang 2 khối */
+#scan-friend .tab-content {
+    flex-direction: row !important;
+    gap: 16px;
+}
+@media (max-width: 900px) {
+    #scan-friend .tab-content {
+        flex-direction: column !important;
+    }
+}

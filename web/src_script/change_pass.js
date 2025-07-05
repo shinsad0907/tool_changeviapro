@@ -200,6 +200,7 @@ function selectErrorRows() {
 function deleteSelectedRows() {
     document.querySelectorAll('#account-tbody tr.selected').forEach(tr => tr.remove());
     updateSelectedCount();
+    
 }
 
 function updateSelectedCount() {

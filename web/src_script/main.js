@@ -24,3 +24,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+// ...existing code...
+
+// Tab chuyển qua lại
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    const idx = Array.from(document.querySelector('.tab-nav').children).findIndex(btn => btn.onclick && btn.onclick.toString().includes(tabId));
+    if (idx >= 0) document.querySelectorAll('.tab-button')[idx].classList.add('active');
+}

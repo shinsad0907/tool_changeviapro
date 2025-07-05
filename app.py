@@ -3,6 +3,7 @@ import time
 import threading
 import json
 from web.src_python.change_pass import thread
+from web.src_python.scan_friend import thread_scan_friend
 import os
 from web.src_python.check_key import check_key
 import tkinter as tk
@@ -30,6 +31,9 @@ def save_config_json(data):
 def start_change_password_process(data):
     thread(data)
 
+@eel.expose
+def start_scan_friend_process(data):
+    thread_scan_friend(data)
 
 def is_key_activated():
     if not os.path.exists(KEY_FILE):

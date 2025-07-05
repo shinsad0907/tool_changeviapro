@@ -131,11 +131,28 @@ class main:
 def thread(data_change_pass):
     print("Data nhận được:", data_change_pass)
     accounts = data_change_pass['account']
+    max_threads = data_change_pass['thread']
     threads = []
+
+    def run_change_pass(acc, idx):
+        instance = main(data_change_pass, idx)
+        instance.changepass(acc)
+
     for idx, acc in enumerate(accounts):
-        t = threading.Thread(target=main(data_change_pass, idx).changepass, args=(acc,))
-        t.start()
+        t = threading.Thread(target=run_change_pass, args=(acc, idx))
         threads.append(t)
+        t.start()
+
+        # Nếu số lượng luồng đạt giới hạn, chờ các luồng hiện tại kết thúc
+        if len(threads) >= max_threads:
+            for t in threads:
+                t.join()
+            threads = []
+
+    # Chờ các luồng còn lại
+    for t in threads:
+        t.join()
+
 
 # Sửa tên function để khớp với JavaScript
 @eel.expose

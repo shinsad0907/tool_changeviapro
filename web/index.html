@@ -25,8 +25,177 @@
                 <button class="tab-button" onclick="switchTab('forgot-pass')">
                     🔓 FORGOT PASSWORD
                 </button>
+                <button class="tab-button" onclick="switchTab('scan-friend')">
+                    👥 QUÉT FRIEND UID
+                </button>
             </div>
+            
+        <!-- Thay thế phần scan-friend tab trong code gốc -->
+                        <!-- Scan Friend Tab -->
+            <div id="scan-friend" class="tab-pane">
+                <div class="tab-content" style="display: flex; gap: 16px;">
+                    <!-- BẢNG TRÁI: DANH SÁCH UID -->
+                    <div class="data-table-container" style="flex: 0 0 500px; min-width: 300px;">
+                        <div class="table-header">
+                            <div class="table-title">🌳 DANH SÁCH UID</div>
+                            <div class="selected-count" id="tree-selected-count">Đã chọn: 0</div>
+                        </div>
+                        <div class="table-wrapper" style="max-height: 600px; overflow: auto;">
+                            <table class="data-table" id="treeview-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="tree-select-all" onchange="toggleTreeSelectAll()"></th>
+                                        <th>STT</th>
+                                        <th>UID</th>
+                                        <th>PASS</th>
+                                        <th>COOKIE</th>
+                                        <th>CHROME</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="treeview-tbody-scan-friend">
+                                    <!-- Sample rows -->
+                                    <tr>
+                                        <td><input type="checkbox" class="tree-row-checkbox" onchange="updateTreeSelectedCount()"></td>
+                                        <td>1</td>
+                                        <td>100001234567890</td>
+                                        <td>pass123</td>
+                                        <td>cookie_data</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="tree-row-checkbox" onchange="updateTreeSelectedCount()"></td>
+                                        <td>2</td>
+                                        <td>100001234567891</td>
+                                        <td>pass456</td>
+                                        <td>cookie_data</td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
+                    <!-- BẢNG PHẢI: 2 KHUNG NHỎ XẾP DỌC -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+                        <!-- NHẬP DỮ LIỆU -->
+                        <div class="data-table-container">
+                            <div class="table-header">
+                                <div class="table-title">📥 NHẬP DỮ LIỆU SCAN</div>
+                                <div class="table-actions">
+                                    <button class="copy-btn" onclick="clearScanInput()">🗑️ Clear</button>
+                                    <button class="copy-btn" onclick="pasteFromClipboard()">📋 Paste</button>
+                                </div>
+                            </div>
+                            <textarea id="scan-input-text" class="form-control" 
+                                    style="height: 150px; resize: vertical; font-family: monospace; font-size: 0.8rem;" 
+                                    placeholder="Nhập dữ liệu theo format:
+                UID|TÊN|PASS|COOKIE|PROXY
+                100001234567890|User1|pass123|cookie_data|192.168.1.1:8080
+
+                Hoặc chỉ UID:
+                100001234567890
+                100001234567891"></textarea>
+                        </div>
+
+                        <!-- KẾT QUẢ SCAN -->
+                        <div class="data-table-container">
+                            <div class="table-header">
+                                <div class="table-title">📋 KẾT QUẢ SCAN</div>
+                                <div class="table-actions">
+                                    <button class="copy-btn" onclick="clearScanResult()">🗑️ Clear</button>
+                                    <button class="copy-btn" onclick="exportScanResult()">📤 Export</button>
+                                    <button class="copy-btn" onclick="copyAllResults()">📋 Copy</button>
+                                </div>
+                            </div>
+                            <div id="scan-result-text" class="form-control" 
+                                style="height: 150px; resize: vertical; font-family: monospace; font-size: 0.8rem; overflow-y: auto; white-space: pre-line; padding: 8px; border: 1px solid #ccc; background-color: #fff;">
+                                <!-- Kết quả scan sẽ hiển thị ở đây -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTROLS SECTION -->
+                <div class="controls-section" style="margin-top: 16px;">
+                    <div class="info-panel">
+                        <div class="panel-title">📊 THỐNG KÊ</div>
+                        <div class="info-item">
+                            <span class="info-label">Tổng UID scan:</span>
+                            <span class="info-value" id="scan-total-uid">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Đã scan:</span>
+                            <span class="info-value" id="scan-completed">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Thành công:</span>
+                            <span class="info-value" id="scan-success">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Thất bại:</span>
+                            <span class="info-value" id="scan-failed">0</span>
+                        </div>
+                    </div>
+
+                    <div class="config-panel">
+                        <div class="panel-title">⚙️ CẤU HÌNH SCAN</div>
+                        
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="scan-use-proxy" checked>
+                                    <label for="scan-use-proxy" class="form-label">Dùng Proxy:</label>
+                                </div>
+                                <select id="scan-proxy-type" class="form-control" style="flex: 1;">
+                                    <option>Tmproxy.com</option>
+                                    <option>ProxyV6</option>
+                                    <option>911S5</option>
+                                    <option>ShopLike</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- <div class="form-group">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="scan-get-follow" checked>
+                                <label for="scan-get-follow" class="form-label">Lấy thông tin Follow</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="scan-get-mutual" checked>
+                                <label for="scan-get-mutual" class="form-label">Lấy bạn chung</label>
+                            </div>
+                        </div> -->
+
+                        <div class="form-group">
+                            <label class="form-label">Số luồng:</label>
+                            <input type="number" id="scan-thread-count" class="form-control" 
+                                value="3" min="1" max="10">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Delay giữa các request (ms):</label>
+                            <input type="number" id="scan-delay" class="form-control" 
+                                value="1000" min="500" max="5000">
+                        </div>
+                    </div>
+
+                    <div class="actions-panel">
+                        <div class="file-output-label">📁 SCAN OUTPUT</div>
+                        <button class="action-button btn-start" id="scan-start-btn" onclick="startScanFriend()">
+                            ▶️ START SCAN
+                        </button>
+                        <button class="action-button btn-stop" id="scan-stop-btn" onclick="stopScanFriend()" disabled>
+                            ⏹️ STOP SCAN
+                        </button>
+                        <button class="action-button btn-export" onclick="exportScanData()">
+                            📤 EXPORT DATA
+                        </button>
+                    </div>
+                </div>
+            </div>
             <!-- Change Password Tab -->
             <div id="change-pass" class="tab-pane active">
                 <div class="tab-content">
@@ -268,5 +437,6 @@
     <script type="text/javascript" src="/eel.js"></script>
     <script src="src_script/change_pass.js"></script>
     <script src="src_script/main.js"></script>
+    <script src="src_script/scan_friend.js"></script>
 </body>
 </html>
