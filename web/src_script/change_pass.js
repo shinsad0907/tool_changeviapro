@@ -239,27 +239,33 @@ function togglePasswordInput() {
 
 // Hiển thị nút Chrome khi chạy
 function showChromeButtonsForRunningAccounts(accounts, autoGetCookie) {
-    // Xóa nút cũ trước
+    console.log("showChromeButtonsForRunningAccounts called with:", accounts, autoGetCookie);
+    
+    // Xóa nút cũ trước - cập nhật selector cho đúng
     document.querySelectorAll('#account-tbody tr').forEach(row => {
-        const tds = row.querySelectorAll('td');
-        if (tds[9]) tds[9].innerHTML = '';
+        const chromeTd = row.querySelector('td:nth-child(10)'); // Cột CHROME là cột thứ 10
+        if (chromeTd) {
+            chromeTd.innerHTML = '';
+        }
     });
     
     accounts.forEach((acc, idx) => {
         const rows = document.querySelectorAll('#account-tbody tr');
         rows.forEach(row => {
-            const tds = row.querySelectorAll('td');
-            if (tds[2] && tds[2].textContent.trim() === String(acc.uid)) {
-                if (tds[9]) {
-                    if (autoGetCookie) {
-                        tds[9].innerHTML = `<span class="chrome-name">Chrome ${idx + 1}</span>`;
-                    } else {
-                        tds[9].innerHTML = `
-                            <span class="chrome-name">Chrome ${idx + 1}</span> 
-                            <button class="get-cookie-btn" data-uid="${acc.uid}">Lấy Cookie</button>
-                            <button class="chrome-close-btn" data-uid="${acc.uid}">Tắt</button>
-                        `;
-                    }
+            const uidTd = row.querySelector('td:nth-child(3)'); // Cột UID là cột thứ 3
+            const chromeTd = row.querySelector('td:nth-child(10)'); // Cột CHROME là cột thứ 10
+            
+            if (uidTd && chromeTd && uidTd.textContent.trim() === String(acc.uid)) {
+                console.log(`Updating Chrome buttons for UID: ${acc.uid}`);
+                
+                if (autoGetCookie) {
+                    chromeTd.innerHTML = `<span class="chrome-name">Chrome ${idx + 1}</span>`;
+                } else {
+                    chromeTd.innerHTML = `
+                        <span class="chrome-name">Chrome ${idx + 1}</span> 
+                        <button class="get-cookie-btn" data-uid="${acc.uid}">Lấy Cookie</button>
+                        <button class="chrome-close-btn" data-uid="${acc.uid}">Tắt</button>
+                    `;
                 }
             }
         });
@@ -333,6 +339,7 @@ function handleStartClick() {
 
     // Gọi eel với tên function đã sửa
     eel.start_change_password_process(data);
+    console.log("Change password process started with data:", data); // Debug log   
     showChromeButtonsForRunningAccounts(accounts, autoGetCookie);
 
     // Enable nút STOP

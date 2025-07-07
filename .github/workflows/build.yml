@@ -281,11 +281,12 @@ jobs:
     - name: Create ZIP package
       run: |
         cd dist
-        Compress-Archive -Path "Change Via Pro" -DestinationPath "Change-Via-Pro-windows.zip"
+        # Tạo file ZIP với tên mới là MyApp-windows.zip
+        Compress-Archive -Path "Change Via Pro" -DestinationPath "MyApp-windows.zip"
         
         # Hiển thị nội dung để kiểm tra
         Write-Host "ZIP package contents:"
-        Expand-Archive -Path "Change-Via-Pro-windows.zip" -DestinationPath temp_check -Force
+        Expand-Archive -Path "MyApp-windows.zip" -DestinationPath temp_check -Force
         
         Write-Host "`n=== Full structure check ==="
         Get-ChildItem -Recurse "temp_check/Change Via Pro" | Select-Object FullName, Length | Format-Table
@@ -320,15 +321,15 @@ jobs:
         
         Remove-Item -Recurse -Force temp_check
         
-        Write-Host "ZIP file created successfully: Change-Via-Pro-windows.zip"
-        Write-Host "ZIP file size: $((Get-Item Change-Via-Pro-windows.zip).Length) bytes"
+        Write-Host "ZIP file created successfully: MyApp-windows.zip"
+        Write-Host "ZIP file size: $((Get-Item MyApp-windows.zip).Length) bytes"
       shell: powershell
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Change-Via-Pro-windows
-        path: dist/Change-Via-Pro-windows.zip
+        name: MyApp-windows
+        path: dist/MyApp-windows.zip
         
     - name: Set version output
       id: set-version
@@ -347,7 +348,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: dist/Change-Via-Pro-windows.zip
+        files: dist/MyApp-windows.zip
         draft: false
         prerelease: false
         generate_release_notes: true
@@ -440,7 +441,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        name: Change-Via-Pro-windows
+        name: MyApp-windows
         path: ./release
         
     - name: Create auto release
@@ -448,7 +449,7 @@ jobs:
       with:
         tag_name: ${{ steps.version.outputs.version }}
         name: "Change Via Pro Auto Release ${{ steps.version.outputs.version }}"
-        files: ./release/Change-Via-Pro-windows.zip
+        files: ./release/MyApp-windows.zip
         draft: false
         prerelease: false
         generate_release_notes: true
@@ -470,7 +471,7 @@ jobs:
           - 📁 **Data organization**: version_client.json được lưu trong thư mục data
           
           ### Tải xuống
-          - `Change-Via-Pro-windows.zip` - Phiên bản Windows với icon
+          - `MyApp-windows.zip` - Phiên bản Windows với icon
           
           ### Nội dung package
           - File `version_client.json` trong `_internal/data/` để kiểm tra cập nhật

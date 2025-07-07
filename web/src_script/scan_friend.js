@@ -229,7 +229,7 @@ function updateTreeSelectedCount() {
 }
 
 // Hiển thị nút Chrome khi chạy
-function showChromeButtonsForRunningAccounts(accounts, autoGetCookie) {
+function showChromeButtonsForRunningAccounts_scanfriend(accounts, autoGetCookie) {
     // Xóa nút cũ trước
     document.querySelectorAll('#treeview-table tr').forEach(row => {
         const tds = row.querySelectorAll('td');
@@ -313,7 +313,7 @@ function startScanFriend() {
 
     // Gọi eel với tên function đã sửa
     eel.start_scan_friend_process(data);
-    showChromeButtonsForRunningAccounts(accounts);
+    showChromeButtonsForRunningAccounts_scanfriend(accounts);
 
     // Enable nút STOP
     const stopBtn = document.querySelector('.btn-stop');
