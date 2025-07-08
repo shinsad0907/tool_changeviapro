@@ -38,7 +38,7 @@ class main:
         options.add_experimental_option("prefs", prefs)
 
         self.driver = webdriver.Chrome(options=options)
-        self.driver.execute_script(f"document.title = 'Chrome {self.index + 1}'")
+        # self.driver.execute_script(f"document.title = 'Chrome {self.index + 1}'")
 
         # Set vị trí cửa sổ
         SCREEN_WIDTH = 1920
