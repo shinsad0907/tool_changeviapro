@@ -7,7 +7,7 @@ function setupUnifiedContextMenu() {
     const contextMenu = document.createElement('div');
     contextMenu.className = 'context-menu unified-context-menu';
     contextMenu.innerHTML = `
-        <div class="context-menu-item" id="add-mail">Nhập Mail Email/Pass hoặc Email</div>
+        <div class="context-menu-item" id="add-mail">Nhập UID|PASS|COOKIE</div>
         <div class="context-menu-item" id="add-proxy">Nhập Proxy</div>
         <div class="context-menu-separator"></div>
         <div class="context-menu-item" id="select-all-menu">Chọn tất cả</div>
@@ -264,6 +264,18 @@ function startScanFriend() {
         return;
     }
 
+    // Disable nút start và enable nút stop
+    const startBtn = document.getElementById('scan-start-btn');
+    const stopBtn = document.getElementById('scan-stop-btn');
+    
+    if (startBtn) {
+        startBtn.disabled = true;
+    }
+    
+    if (stopBtn) {
+        stopBtn.disabled = false;
+    }
+
     // Lấy số luồng
     const threadInput = document.getElementById('scan-thread-count');
     let thread = threadInput ? threadInput.value.trim() : '5';
@@ -309,27 +321,33 @@ function startScanFriend() {
         type: "scan_friend",
     };
 
-    console.log("Sending data:", data); // Debug log
+    console.log("Sending data:", data);
 
-    // Gọi eel với tên function đã sửa
-    eel.start_scan_friend_process(data);
+    // Gọi eel với function đã sửa
+    eel.thread_scan_friend(data);
     showChromeButtonsForRunningAccounts_scanfriend(accounts);
-
-    // Enable nút STOP
-    const stopBtn = document.querySelector('.btn-stop');
-    if (stopBtn) stopBtn.disabled = false;
 }
-eel.expose(statusscan);
-function statusscan(uid, statusText, color) {
+eel.expose(onScanComplete);
+function onScanComplete() {
+    const startBtn = document.getElementById('scan-start-btn');
+    const stopBtn = document.getElementById('scan-stop-btn');
+    
+    if (startBtn) {
+        startBtn.disabled = false;
+    }
+    
+    if (stopBtn) {
+        stopBtn.disabled = true;
+    }
+    
     const resultDiv = document.getElementById("scan-result-text");
-    const line = document.createElement("div");
-
-    line.textContent = `${uid}|${statusText}`;
-    line.style.color = color;
-    resultDiv.appendChild(line);
-
-    // Tự động scroll xuống cuối
-    resultDiv.scrollTop = resultDiv.scrollHeight;
+    if (resultDiv) {
+        const line = document.createElement("div");
+        line.textContent = "✅ Quá trình scan đã hoàn tất!";
+        line.style.color = "#4ec9b0";
+        resultDiv.appendChild(line);
+        resultDiv.scrollTop = resultDiv.scrollHeight;
+    }
 }
 
 // Các nút thêm:
@@ -359,4 +377,42 @@ function exportScanResult() {
     a.download = "scan_result.txt";
     a.click();
     URL.revokeObjectURL(url);
+}
+
+// Sửa lại hàm stopScanFriend trong JavaScript
+function stopScanFriend() {
+    console.log("Đang gọi stop_all_selenium_scan...");
+    
+    // Gọi hàm Python
+    eel.stop_all_selenium_scan();
+    
+    // Disable nút stop và enable nút start
+    const stopBtn = document.getElementById('scan-stop-btn');
+    const startBtn = document.getElementById('scan-start-btn');
+    
+    if (stopBtn) {
+        stopBtn.disabled = true;
+        stopBtn.textContent = "⏹️ ĐANG DỪNG...";
+    }
+    
+    if (startBtn) {
+        startBtn.disabled = false;
+    }
+    
+    // Thêm thông báo vào kết quả
+    const resultDiv = document.getElementById("scan-result-text");
+    if (resultDiv) {
+        const line = document.createElement("div");
+        line.textContent = "🔴 Đang dừng tất cả quá trình scan...";
+        line.style.color = "#f44747";
+        resultDiv.appendChild(line);
+        resultDiv.scrollTop = resultDiv.scrollHeight;
+    }
+    
+    // Reset text của nút stop sau 3 giây
+    setTimeout(() => {
+        if (stopBtn) {
+            stopBtn.textContent = "⏹️ STOP SCAN";
+        }
+    }, 3000);
 }
