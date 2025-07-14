@@ -64,6 +64,7 @@ def reload_main():
     eel.start('index.html', size=(1400, 900), block=False)
 @eel.expose
 def save_exported_accounts(lines):
+    print("Lưu danh sách tài khoản vào file...")
     try:
         # Tạo tên file mặc định
         now = time.localtime()

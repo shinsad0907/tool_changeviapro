@@ -276,7 +276,7 @@ function handleStartClick() {
     // Lấy các dòng đã chọn
     const checkedRows = document.querySelectorAll('#account-tbody .row-checkbox:checked');
     if (checkedRows.length === 0) {
-        alert('Vui lòng chọn ít nhất một tài khoản để chạy!');
+        alert('Vui lòng chọn tài khoản để xử lý!');
         return;
     }
 
@@ -292,7 +292,6 @@ function handleStartClick() {
     const password = passwordInput ? passwordInput.value.trim() : '';
     if (type_password === 1 && !password) {
         alert('Vui lòng nhập mật khẩu!');
-        if (passwordInput) passwordInput.focus();
         return;
     }
 
@@ -305,25 +304,37 @@ function handleStartClick() {
     const proxyInput = document.getElementById('proxy-input');
     const proxy = proxyInput ? proxyInput.value.trim() : 'no ()';
 
+    // Reset status for all selected accounts to "Pending"
+    checkedRows.forEach(cb => {
+        const row = cb.closest('tr');
+        const statusCell = row.querySelector('td:nth-last-child(2)');
+        if (statusCell) {
+            statusCell.innerHTML = '<span style="color: #dcdcaa;">⏳ Pending</span>';
+        }
+    });
+
     // Lấy danh sách tài khoản đã chọn
     const accounts = [];
     checkedRows.forEach(cb => {
         const row = cb.closest('tr');
-        const tds = row.querySelectorAll('td');
+        const uid = row.cells[2].textContent;
+        const cookie = row.cells[3].textContent;
+        const mail = row.cells[4].textContent;
+        const oldPass = row.cells[5].textContent;
+        const proxy = row.cells[6].textContent;
+        const code = row.cells[7].textContent;
+        
         accounts.push({
-            selected: true,
-            stt: tds[1]?.textContent.trim() || "",
-            uid: tds[2]?.textContent.trim() || "",
-            cookie: tds[3]?.textContent.trim() || "",
-            email: tds[4]?.textContent.trim() || "",
-            password: tds[5]?.textContent.trim() || "",
-            proxy: tds[6]?.textContent.trim() || "",
-            code: tds[7]?.textContent.trim() || "",
-            status: tds[8]?.textContent.trim() || ""
+            uid: uid,
+            cookie: cookie,
+            mail: mail,
+            pass: oldPass,
+            proxy: proxy,
+            code: code
         });
     });
 
-    // Tạo object json
+    // Create data object
     const autoGetCookie = document.getElementById('auto-get-cookie').checked;
     const data = {
         account: accounts,
@@ -335,42 +346,75 @@ function handleStartClick() {
         auto_get_cookie: autoGetCookie
     };
 
-    console.log("Sending data:", data); // Debug log
+    console.log("Starting password change process with data:", data);
 
-    // Gọi eel với tên function đã sửa
-    eel.start_change_password_process(data);
-    console.log("Change password process started with data:", data); // Debug log   
-    showChromeButtonsForRunningAccounts(accounts, autoGetCookie);
-
-    // Enable nút STOP
-    const stopBtn = document.querySelector('.btn-stop');
+    // Disable start button and enable stop button
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-change-pass');
+    if (startBtn) startBtn.disabled = true;
     if (stopBtn) stopBtn.disabled = false;
+
+    // Start the process
+    eel.thread(data);
 }
 
+// Update UI when process stops
+eel.expose(onProcessStopped);
+function onProcessStopped() {
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-change-pass');
+    if (startBtn) startBtn.disabled = false;
+    if (stopBtn) stopBtn.disabled = true;
+}
 
-// Expose functions để Python có thể gọi
+// Update UI when a batch completes
+eel.expose(onBatchComplete);
+function onBatchComplete() {
+    console.log("Batch completed");
+}
+
+// Handle account status updates
 eel.expose(updateAccountStatus);
 function updateAccountStatus(uid, statusText, color) {
-    console.log(`Updating status for ${uid}: ${statusText}`); // Debug log
-    const rows = document.querySelectorAll('#account-tbody tr');
-    rows.forEach(row => {
-        const tds = row.querySelectorAll('td');
-        if (tds[2] && tds[2].textContent.trim() === String(uid)) {
-            tds[8].innerHTML = `<span style="color: ${color};">${statusText}</span>`;
-        }
-    });
+    console.log(`Updating status for ${uid}: ${statusText}`);
+    
     if (uid === "ALL") {
-        // Chỉ cập nhật status cho những dòng đang chạy (ví dụ: có checkbox được chọn)
+        // Update all accounts
         const rows = document.querySelectorAll('#account-tbody tr');
         rows.forEach(row => {
-            const cb = row.querySelector('.row-checkbox');
-            if (cb && cb.checked) { // chỉ update cho dòng đang chạy
-                const tds = row.querySelectorAll('td');
-                if (tds[8]) tds[8].innerHTML = `<span style="color: ${color};">${statusText}</span>`;
+            const statusCell = row.querySelector('td:nth-last-child(2)');
+            if (statusCell) {
+                statusCell.innerHTML = `<span style="color: ${color}">${statusText}</span>`;
             }
         });
+        
+        // Re-enable start button
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-change-pass');
+        if (startBtn) startBtn.disabled = false;
+        if (stopBtn) stopBtn.disabled = true;
         return;
     }
+    
+    // Update specific account
+    const rows = document.querySelectorAll('#account-tbody tr');
+    rows.forEach(row => {
+        if (row.cells[2].textContent === uid) {
+            const statusCell = row.querySelector('td:nth-last-child(2)');
+            if (statusCell) {
+                statusCell.innerHTML = `<span style="color: ${color}">${statusText}</span>`;
+            }
+        }
+    });
+}
+
+// Stop process
+function stopProcess() {
+    console.log("Stopping password change process...");
+    eel.stop_all_selenium()();
+    
+    const stopBtn = document.getElementById('stop-change-pass');
+    if (stopBtn) stopBtn.disabled = true;
 }
 function exportData() {
     // Lấy các dòng được tích checkbox
@@ -404,7 +448,6 @@ function exportData() {
         }
     });
 }
-// Sửa function onGetCookie
 eel.expose(onGetCookie);
 function onGetCookie(uid, newPass, cookies) {
     console.log(`Received cookies for ${uid}:`, cookies); // Debug log
@@ -430,22 +473,4 @@ function onGetCookie(uid, newPass, cookies) {
             }
         }
     });
-}
-
-// Các function khác cần thiết
-function selectRow(row, event) {
-    // Function này có thể để trống hoặc implement logic selection
-}
-
-function toggleSelectAll() {
-    const selectAllCheckbox = document.getElementById('select-all');
-    if (selectAllCheckbox) {
-        selectAllRows(selectAllCheckbox.checked);
-    }
-}
-
-function stopProcess() {
-    eel.stop_all_selenium();
-    const stopBtn = document.querySelector('.btn-stop');
-    if (stopBtn) stopBtn.disabled = true;
 }

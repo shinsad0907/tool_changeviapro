@@ -332,10 +332,10 @@
 
                         <div class="actions-panel">
                             <div class="file-output-label">📁 FILE OUTPUT</div>
-                            <button class="action-button btn-start" id="start-btn">
+                            <button class="action-button btn-start" id="start-btn" onclick="handleStartClick()">
                                 ▶️ START
                             </button>
-                            <button class="action-button btn-stop" onclick="stopProcess()" disabled>
+                            <button class="action-button btn-stop" id="stop-change-pass" onclick="stopProcess()" disabled>
                                 ⏹️ STOP
                             </button>
                             <button class="action-button btn-export" onclick="exportData()">
