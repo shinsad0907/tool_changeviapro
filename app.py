@@ -6,6 +6,7 @@ from web.src_python.change_pass import thread
 from web.src_python.scan_friend import thread_scan_friend
 import os
 from web.src_python.check_key import check_key
+from web.src_python.get2fa import start_2fa_process
 import tkinter as tk
 from tkinter import filedialog
 import datetime
@@ -29,11 +30,15 @@ def save_config_json(data):
 
 @eel.expose
 def start_change_password_process(data):
-    thread(data)
+    start_2fa_process(data)
 
 @eel.expose
 def start_scan_friend_process(data):
     thread_scan_friend(data)
+
+@eel.expose
+def start_get_2fa_process(data):
+    start_2fa_process(data)
 
 def is_key_activated():
     if not os.path.exists(KEY_FILE):

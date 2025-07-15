@@ -355,7 +355,7 @@ function handleStartClick() {
     if (stopBtn) stopBtn.disabled = false;
 
     // Start the process
-    eel.thread(data);
+    eel.process_2fa_data(data);
 }
 
 // Update UI when process stops

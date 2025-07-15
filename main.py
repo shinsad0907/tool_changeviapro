@@ -3,6 +3,7 @@ import time
 import threading
 import json
 from web.src_python.change_pass import thread
+from web.src_python.get2fa import start_2fa_process   # Import the correct function
 import os
 from web.src_python.check_key import check_key
 eel.init('web')  # Folder chứa file HTML

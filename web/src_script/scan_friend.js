@@ -44,6 +44,17 @@ function setupUnifiedContextMenu() {
             showContextMenu(e.pageX, e.pageY);
         });
     }
+    
+    // Event listener cho bảng 2FA
+    const twoFATable = document.getElementById('2fa-table');
+    if (twoFATable) {
+        twoFATable.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            currentTab = 'enable-2fa';
+            showContextMenu(e.pageX, e.pageY);
+        });
+    }
 
     // QUAN TRỌNG: Chặn context menu mặc định CHỈ cho các table
     document.addEventListener('contextmenu', function (e) {
