@@ -1,0 +1,31 @@
+{
+    "account": [
+        {
+            "selected": true,
+            "stt": "3",
+            "uid": "100001234567892",
+            "cookie": "c_user=100001234567892...",
+            "email": "user3@hotmail.com",
+            "password": "password789",
+            "proxy": "192.168.1.3:8080",
+            "code": "789123",
+            "status": "❌ Error"
+        },
+        {
+            "selected": true,
+            "stt": "3",
+            "uid": "100001234567892",
+            "cookie": "c_user=100001234567892...",
+            "email": "user3@hotmail.com",
+            "password": "password789",
+            "proxy": "192.168.1.3:8080",
+            "code": "789123",
+            "status": "❌ Error"
+        }
+    ],
+    "proxy": "no ()",
+    "type_password": 2,
+    "password": "ddd",
+    "thread": 0,
+    "type": "change_pass"
+}
