@@ -31,6 +31,9 @@
                 <button class="tab-button" onclick="switchTab('enable-2fa')">
                     🔐 BẬT 2FA
                 </button>
+                <button class="tab-button" onclick="switchTab('add-mail')">
+                    ✉️ ADD MAIL
+                </button>
             </div>
             
         <!-- Thay thế phần scan-friend tab trong code gốc -->
@@ -412,6 +415,112 @@
                 </div>
             </div>
 
+            <!-- Add Mail Tab -->
+            <div id="add-mail" class="tab-pane">
+                <div class="tab-content">
+                    <div style="display: flex; gap: 16px;">
+                        <!-- BẢNG TRÁI: TREEVIEW MAIL NGUỒN -->
+                        <div class="data-table-container" style="flex: 0 0 500px; min-width: 300px;">
+                            <div class="table-header">
+                                <div class="table-title">📧 MAIL NGUỒN</div>
+                                <div class="selected-count" id="source-mail-selected-count">Đã chọn: 0</div>
+                            </div>
+                            <div class="table-wrapper" style="height: 300px; overflow: auto;">
+                                <table class="data-table" id="source-mail-table">
+                                    <thead>
+                                        <tr>
+                                            <th><input type="checkbox" id="source-mail-select-all" onchange="toggleSourceMailSelectAll()"></th>
+                                            <th>STT</th>
+                                            <th>MAIL</th>
+                                            <th>PASS</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="source-mail-tbody">
+                                        <!-- Sample data -->
+                                        <tr>
+                                            <td><input type="checkbox" class="source-mail-row-checkbox" onchange="updateSourceMailSelectedCount()"></td>
+                                            <td>1</td>
+                                            <td>cornnel@op.pl</td>
+                                            <td>Hieu567@@@</td>
+                                            <td><span style="color: #4ec9b0;">✓ Ready</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- BẢNG PHẢI: TEXT AREA NHẬP MAIL -->
+                        <div class="data-table-container" style="flex: 1;">
+                            <div class="table-header">
+                                <div class="table-title">📥 NHẬP MAIL MỚI</div>
+                                <div class="table-actions">
+                                    <button class="copy-btn" onclick="clearAddMailInput()">🗑️ Clear</button>
+                                    <button class="copy-btn" onclick="pasteAddMailFromClipboard()">📋 Paste</button>
+                                </div>
+                            </div>
+                            <div class="table-wrapper" style="height: 300px;">
+                                <textarea id="add-mail-input" class="form-control" 
+                                        style="height: 100%; resize: none; font-family: monospace; font-size: 0.9rem;" 
+                                        placeholder="Nhập danh sách mail theo định dạng:&#10;MAIL|PASSWORD&#10;example@gmail.com|pass123&#10;example2@gmail.com|pass456"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTROLS SECTION -->
+                <div class="controls-section" style="margin-top: 16px;">
+                    <div class="info-panel">
+                        <div class="panel-title">📊 THỐNG KÊ</div>
+                        <div class="info-item">
+                            <span class="info-label">Tổng mail nguồn:</span>
+                            <span class="info-value" id="total-source-mail">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Đã xử lý:</span>
+                            <span class="info-value" id="processed-mail">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Thành công:</span>
+                            <span class="info-value" id="success-mail">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Thất bại:</span>
+                            <span class="info-value" id="failed-mail">0</span>
+                        </div>
+                    </div>
+
+                    <div class="config-panel">
+                        <div class="panel-title">⚙️ CẤU HÌNH</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Số luồng:</label>
+                            <input type="number" id="add-mail-thread-count" class="form-control" 
+                                value="17" min="1" max="10">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Số mail mỗi lần add:</label>
+                            <input type="number" id="add-mail-batch-size" class="form-control" 
+                                value="3" min="1" max="20">
+                        </div>
+                    </div>
+
+                    <div class="actions-panel">
+                        <div class="file-output-label">📁 MAIL OUTPUT</div>
+                        <button class="action-button btn-start" id="add-mail-start-btn" onclick="startAddMail()">
+                            ▶️ START ADD
+                        </button>
+                        <button class="action-button btn-stop" id="add-mail-stop-btn" onclick="stopAddMail()" disabled>
+                            ⏹️ STOP
+                        </button>
+                        <button class="action-button btn-export" onclick="exportAddMailData()">
+                            📤 EXPORT DATA
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Enable 2FA Tab -->
             <div id="enable-2fa" class="tab-pane">
                 <div class="tab-content">
@@ -557,5 +666,6 @@
     <script src="src_script/main.js"></script>
     <script src="src_script/scan_friend.js"></script>
     <script src="src_script/get2fa.js"></script>
+    <script src="src_script/add_mail.js"></script>
 </body>
 </html>

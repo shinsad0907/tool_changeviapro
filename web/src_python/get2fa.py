@@ -95,7 +95,145 @@ class Get2FA:
         time.sleep(1)
         
         self.driver.get("https://www.facebook.com")
-
+    def check_code(self, account):
+        retry_count = 0
+        max_retries = 3
+        
+        while retry_count < max_retries:
+            try:
+                # Check for OK text in multiple possible xpaths
+                polish_text = self.wait_and_get_text("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[4]/div[2]/div[1]/div/div/div[1]/div/h2/span", timeout=5)
+                
+                if polish_text and "Pomóż chronić swoje konto" in polish_text:
+                    print("Found Polish verification text, continuing with the process...")
+                    return True
+                error_text = None
+                error_xpath_options = [
+                    "/html/body/div[8]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[1]/div/h2/span",
+                    "/html/body/div[7]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[1]/div/h2/span",
+                    "/html/body/div[6]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[1]/div/h2/span",
+                    "/html/body/div[9]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[1]/div/h2/span"
+                ]
+                
+                # Try each xpath until we find text or run out of options
+                for xpath in error_xpath_options:
+                    error_text = self.wait_and_get_text(xpath, timeout=5)
+                    if error_text:
+                        print(f"Found error text at {xpath}: {error_text}")
+                        break
+                if error_text and "możesz" in error_text:
+                    print(f"Found 'ok' error message, retrying... Attempt {retry_count + 1}/{max_retries}")
+                    
+                    # Close current driver and restart everything
+                    self.driver.quit()
+                    self.driver = None
+                    self.setup_driver()
+                    self.login(account['cookie'])
+                    
+                    # Navigate to security page
+                    self.driver.get("https://accountscenter.facebook.com/password_and_security")
+                    
+                    # Click 2FA settings
+                    click_success = False
+                    for xpath in [
+                        "/html/body/div[1]/div/div/div/div/div[1]/div/div/div[1]/div[1]/div/div[1]/div[1]/div[2]/div/div/div/div[2]/div/main/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/div[1]",
+                        "/html/body/div[1]/div/div/div/div[1]/div/div/div[1]/div[1]/div/div[1]/div[1]/div[2]/div/div/div/div[2]/div/main/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/div[1]"
+                    ]:
+                        try:
+                            self.wait_and_click(xpath, timeout=10)
+                            click_success = True
+                            break
+                        except:
+                            continue
+                            
+                    if not click_success:
+                        print("Không thể click vào 2FA settings")
+                        retry_count += 1
+                        continue
+                            
+                    # Click setup 2FA
+                    setup_success = False
+                    for xpath in [
+                        "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div[1]",
+                        "/html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div/div"
+                    ]:
+                        try:
+                            self.wait_and_click(xpath, timeout=10)
+                            setup_success = True
+                            break
+                        except:
+                            continue
+                            
+                    if not setup_success:
+                        print("Không thể click vào setup 2FA")
+                        retry_count += 1
+                        continue
+                        
+                    retry_count += 1
+                    continue
+                
+                # Check second xpath for Polish text
+                
+                
+                # If neither condition is met
+                print("Verification required via email or WhatsApp")
+                eel.update2FAResult(account['uid'], "mail whatsapp", "⚠️ Verification required via email or WhatsApp")()
+                if self.driver:
+                    self.driver.quit()
+                    self.driver = None
+                return False
+                
+            except Exception as e:
+                print(f"Error during code check: {e}")
+                retry_count += 1
+                
+                # Check second xpath for Polish text
+                polish_text = self.wait_and_get_text("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[4]/div[2]/div[1]/div/div/div[1]/div/h2/span", timeout=5)
+                
+                if polish_text and "Pomóż chronić swoje konto" in polish_text:
+                    print("Found Polish verification text, continuing with the process...")
+                    return True
+                
+                # If neither condition is met
+                print("Verification required via email or WhatsApp")
+                eel.update2FAResult(account['uid'], "", "⚠️ Verification required via email or WhatsApp")()
+                if self.driver:
+                    self.driver.quit()
+                    self.driver = None
+                return False
+                
+            except Exception as e:
+                print(f"Error during code check: {e}")
+                retry_count += 1
+                
+        if retry_count >= max_retries:
+            print("Maximum retry attempts reached")
+            eel.update2FAResult(account['uid'], "", "❌ Maximum retry attempts reached")()
+            if self.driver:
+                self.driver.quit()
+                self.driver = None
+            return False
+            
+    def check_login(self,account):
+        try:
+            current_url = self.driver.current_url
+            print(f"Current URL: {current_url}")
+            
+            if "956" in current_url:
+                print("Checkpoint 956 detected")
+                eel.update2FAResult(account['uid'], "956", "❌ Checkpoint 956")()
+                return False
+            elif current_url == "https://accountscenter.facebook.com/password_and_security":
+                print("Login successful")
+                return True
+            else:
+                print("Checkpoint 282 detected")
+                eel.update2FAResult(account['uid'], "282", "❌ Checkpoint 282")()
+                return False
+        except Exception as e:
+            print(f"Error checking login status: {e}")
+            return False
+            
     def login(self, cookie_str):
         try:
             self.wait_and_click("/html/body/div[3]/div/div/div/div/div/div[3]/div[2]/div/div[2]/div[1]/div")
@@ -170,7 +308,6 @@ class Get2FA:
     def run_delete_maiil(self):
         try:
             self.driver.get("https://accountscenter.facebook.com/personal_info/contact_points")
-            time.sleep(3)
             
             self.wait_and_click("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div/div/div[2]/div/div[1]")
             self.wait_and_click("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div[2]/div/div/div/div/div/div[1]")
@@ -184,6 +321,7 @@ class Get2FA:
         except Exception as e:
             print(f"Lỗi khi xóa email: {e}")
 
+        
     def run_change_2fa(self, account):
         print(f"Bắt đầu xử lý account: {account['uid']}")
         
@@ -195,16 +333,25 @@ class Get2FA:
                     return False
             
             self.login(account['cookie'])
-            time.sleep(3)
+            
             
             # Kiểm tra flag dừng
             with thread_lock:
                 if not is_running:
                     print(f"Thread bị dừng, bỏ qua account: {account['uid']}")
                     return False
-            
+                    
+      
+            # Load trang security
             self.driver.get("https://accountscenter.facebook.com/password_and_security")
-            time.sleep(5)
+            if self.check_login(account):
+                print("Login check passed, continuing...")
+            else:
+                print("Login check failed, stopping process")
+                if self.driver:
+                    self.driver.quit()
+                    self.driver = None
+                return False
             
             # Thử các xpath khác nhau để click vào 2FA settings
             click_success = False
@@ -227,17 +374,14 @@ class Get2FA:
                 except:
                     continue
             
-            if not click_success:
-                raise Exception("Không thể click vào 2FA settings")
-            
-            time.sleep(3)
-            
             # Thử các xpath để setup 2FA
             setup_xpath_options = [
                 "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div[1]",
                 "/html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div/div"
+                "/html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[1]/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div[1]/div"
             ]
             
+            setup_success = False
             for xpath in setup_xpath_options:
                 try:
                     # Kiểm tra flag dừng
@@ -247,12 +391,19 @@ class Get2FA:
                             return False
                     
                     self.wait_and_click(xpath, timeout=10)
+                    
+                    # Check for error messages after clicking setup button
+                    if not self.check_code(account):
+                        print(f"Lỗi xác thực cho {account['uid']}, bỏ qua account này")
+                        return False  # Return false to stop processing this account
+                    
+                    setup_success = True
                     break
                 except:
                     continue
-            
-            time.sleep(3)
-            
+
+            print("Không thể setup 2FA, thử lại...")
+        
             # Click để tiếp tục setup
             continue_xpath_options = [
                 "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div",
@@ -273,7 +424,6 @@ class Get2FA:
                     continue
             
             time.sleep(10)
-            
             # Lấy mã 2FA
             ma_2fa = self.wait_and_get_text("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[3]/div/div[4]/div[2]/div[1]/div/div/div[4]/div[2]/div/div/div/div[1]/span")
             
@@ -299,11 +449,9 @@ class Get2FA:
             
             # Nhập code 2FA
             self.wait_and_send_keys("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[4]/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div[1]/input", code_2fa)
-            time.sleep(2)
             
             # Click xác nhận
             self.wait_and_click("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[4]/div/div[5]/div/div/div/div/div/div/div/div/div")
-            time.sleep(5)
             
             # Nhập password để xác nhận
             password_xpath_options = [
@@ -352,7 +500,6 @@ class Get2FA:
                 except:
                     continue
             
-            time.sleep(5)
             
             # Kiểm tra kết quả
             success_text = self.wait_and_get_text("/html/body/div[1]/div/div[1]/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[5]/div/div[4]/div[2]/div[1]/div/div/div/div/h2/span")
