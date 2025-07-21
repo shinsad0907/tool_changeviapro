@@ -95,6 +95,26 @@ class Get2FA:
         time.sleep(1)
         
         self.driver.get("https://www.facebook.com")
+
+    def meta_2FA(self,account):
+        self.driver.get("https://auth.meta.com/")
+        self.wait_and_click("/html/body/div[1]/div/div/div/div/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div[1]/div/div/div/div/div[2]/div/div/div")
+        self.wait_and_click("/html/body/div[1]/div/div/div/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[2]/div/div[1]/div[1]/div/div")
+        self.wait_and_click("/html/body/div[1]/div/div/div/div/div/div/div[1]/div[1]/div/div/div[1]/div[2]/div/div/div[4]/label/div[1]/input")
+        self.wait_and_click("/html/body/div[1]/div/div/div/div/div/div/div[1]/div[1]/div/div/div[1]/div[3]/div/div/div[2]/div/div[1]/div[1]/div/div")
+        for i in range(100):
+            if self.driver.current_url == "https://auth.meta.com/language":
+                self.run_change_2fa(account)
+            else:
+                pass
+# tạo tài khoản 
+# 
+# /html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div[1]/div[1]
+# /html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div[1]/div[1]
+# /html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div/div
+# 2fa /html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[3]/div/div[4]/div[2]/div[1]/div/div/div[4]/div[2]/div/div/div/div[1]/span
+# /html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[3]/div/div[5]/div/div/div/div/div/div/div/div/div
+
     def check_code(self, account):
         retry_count = 0
         max_retries = 3
@@ -196,6 +216,7 @@ class Get2FA:
                 
                 # If neither condition is met
                 print("Verification required via email or WhatsApp")
+                # self.meta_2FA(account)
                 eel.update2FAResult(account['uid'], "", "⚠️ Verification required via email or WhatsApp")()
                 if self.driver:
                     self.driver.quit()
@@ -611,8 +632,8 @@ def start_2fa_process(data):
             thread_count = 1
         
         # Giới hạn số thread tối đa
-        if thread_count > 5:
-            thread_count = 5
+        if thread_count > 20:
+            thread_count = 20
         
         # Kiểm tra xem có đang chạy không
         with thread_lock:

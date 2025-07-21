@@ -9,6 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import eel
 
+
+thread_lock = threading.Lock()
+is_running = False
 class main_add_mail:
     def __init__(self, data_add_mail, index):
         scale = 0.5
@@ -71,27 +74,103 @@ class main_add_mail:
         element.send_keys(keys)
 
     def login(self,mail,password):
-        try:
-            self.wait_and_click("/html/body/div[5]/div/div[2]/div/div[6]/button[2]")
-        except:
-            self.wait_and_click("/html/body/div[5]/div/div[2]/div/div[6]/button[2]")
-        print("Đang đăng nhập với mail:", mail)
-        try:
-            self.wait_and_send_keys("/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[2]/form/div[1]/div/div[2]/div[1]/input",mail)
-        except:
-            self.wait_and_send_keys("/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[3]/form/div[1]/div/div[2]/div[1]/input", mail)
-        try:
-            self.wait_and_click("/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[2]/form/div[2]/div/button")
-        except:
-            self.wait_and_click("/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[3]/form/div[2]/div/button")
-        try:
-            self.wait_and_send_keys("/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[2]/form/div[3]/div[2]/div[1]/input", password)
-        except:
-            self.wait_and_send_keys("/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[3]/form/div[3]/div[2]/div[1]/input", password)
-        try:
-            self.wait_and_click("/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[2]/form/div[4]/div/button")    
-        except:
-            self.wait_and_click("/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[3]/form/div[4]/div/button")    
+        xpath_options = [
+            "/html/body/div[5]/div/div[2]/div/div[6]/button[2]",
+            "/html/body/div[5]/div/div[2]/div/div[6]/button[2]",
+        ]
+        
+        for xpath in xpath_options:
+            try:
+                # Kiểm tra flag dừng
+                with thread_lock:
+                    if not is_running:
+                        print(f"Thread bị dừng, bỏ qua account: {mail}")
+                        return False
+                
+                self.wait_and_click(xpath, timeout=10)
+                click_success = True
+                break
+            except:
+                continue
+
+        xpath_options = [
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[2]/form/div[1]/div/div[2]/div[1]/input",
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[3]/form/div[1]/div/div[2]/div[1]/input",
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[4]/form/div[1]/div/div[2]/div[1]/input",
+        ]
+        
+        for xpath in xpath_options:
+            try:
+                # Kiểm tra flag dừng
+                with thread_lock:
+                    if not is_running:
+                        print(f"Thread bị dừng, bỏ qua account: {mail}")
+                        return False
+                
+                self.wait_and_send_keys(xpath,mail, timeout=10)
+                click_success = True
+                break
+            except:
+                continue
+
+        xpath_options = [
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[2]/form/div[2]/div/button",
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[3]/form/div[2]/div/button",
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[4]/form/div[2]/div/button",
+        ]
+        
+        for xpath in xpath_options:
+            try:
+                # Kiểm tra flag dừng
+                with thread_lock:
+                    if not is_running:
+                        print(f"Thread bị dừng, bỏ qua account: {mail}")
+                        return False
+                
+                self.wait_and_click(xpath, timeout=10)
+                click_success = True
+                break
+            except:
+                continue
+        xpath_options = [
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[2]/form/div[3]/div[2]/div[1]/input",
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[3]/form/div[3]/div[2]/div[1]/input",
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[4]/form/div[3]/div[2]/div[1]/input",
+        ]
+        
+        for xpath in xpath_options:
+            try:
+                # Kiểm tra flag dừng
+                with thread_lock:
+                    if not is_running:
+                        print(f"Thread bị dừng, bỏ qua account: {mail}")
+                        return False
+                
+                self.wait_and_send_keys(xpath, password, timeout=10)
+                click_success = True
+                break
+            except:
+                continue
+
+        xpath_options = [
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[2]/form/div[4]/div/button",
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[3]/form/div[4]/div/button",
+            "/html/body/div[1]/main/div/div[1]/div[1]/div/div[1]/div/div[4]/form/div[4]/div/button",
+        ]
+        
+        for xpath in xpath_options:
+            try:
+                # Kiểm tra flag dừng
+                with thread_lock:
+                    if not is_running:
+                        print(f"Thread bị dừng, bỏ qua account: {mail}")
+                        return False
+                
+                self.wait_and_send_keys(xpath, password, timeout=10)
+                click_success = True
+                break
+            except:
+                continue
     def check_add(self):
         if "Nie" in self.wait_and_get_text("/html/body/div[2]/div/div[3]/div/div/div/div[2]").split():
             return False, 'Alias'
@@ -102,7 +181,25 @@ class main_add_mail:
         self.driver.get("https://ustawienia.poczta.onet.pl/Konto/AlternatywneAdresy")
         self.driver.get("https://ustawienia.poczta.onet.pl/Konto/AlternatywneAdresy")
         self.driver.get("https://ustawienia.poczta.onet.pl/Konto/AlternatywneAdresy")
-        self.wait_and_click("/html/body/div[2]/div/div[2]/div/div/section/div/div[2]/button")
+        xpath_options = [
+            "/html/body/div[2]/div/div[2]/div/div/section/div/div[2]/button",
+            "/html/body/div[2]/div/div[2]/div/div/section/div/div[3]/button",
+            "/html/body/div[2]/div/div[2]/div/div/section/div/div[4]/button",
+        ]
+        
+        for xpath in xpath_options:
+            try:
+                # Kiểm tra flag dừng
+                with thread_lock:
+                    if not is_running:
+                        print(f"Thread bị dừng, bỏ qua account: {mail}")
+                        return False
+                
+                self.wait_and_click(xpath, timeout=0)
+                click_success = True
+                break
+            except:
+                continue
         self.wait_and_send_keys("/html/body/div[2]/div/div[2]/div/div/section/div/form/div[2]/div/div[1]/div/div/div/input", mail)
         self.wait_and_click("/html/body/div[2]/div/div[2]/div/div/section/div/form/div[2]/div/div[2]/div/div[2]/button")
         # Đợi 3 giây để hệ thống xử lý và hiển thị thông tin
@@ -132,6 +229,7 @@ class main_add_mail:
 
 @eel.expose
 def add_mail_process(data):
+    global is_running
     try:
         print("Received data:", data)
         source_mails = data['data']['sourceMails']
@@ -158,6 +256,7 @@ def add_mail_process(data):
                 'status': 'Running',
                 'message': 'Đang xử lý'
             }
+            is_running = True
             
             # Cập nhật UI
             eel.updateAddMailProgress({
