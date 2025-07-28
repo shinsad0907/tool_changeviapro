@@ -264,12 +264,13 @@ async function pasteAddMailFromClipboard() {
     }
 }
 
-// Main functionality
 function updateConfig() {
+    const threadCount = parseInt(document.getElementById('add-mail-thread-count').value);
     data.config = {
-        threadCount: parseInt(document.getElementById('add-mail-thread-count').value) || 3,
+        threadCount: threadCount || 17, // Đặt giá trị mặc định là 17 nếu parse thất bại
         batchSize: parseInt(document.getElementById('add-mail-batch-size').value) || 10
     };
+    console.log('Updated config:', data.config); // Log để debug
 }
 
 function getSelectedMails() {
@@ -294,74 +295,180 @@ function parseInputMails() {
         })
         .filter(mail => mail.email && mail.password);
 }
+function getSelectedSourceMails() {
+    const selectedRows = document.querySelectorAll('.source-mail-row-checkbox:checked');
+    return Array.from(selectedRows).map(checkbox => {
+        const row = checkbox.closest('tr');
+        return {
+            email: row.cells[2].textContent,
+            password: row.cells[3].textContent
+        };
+    });
+}
+// Add new function to handle login
 
-async function startAddMail() {
-    if (data.isRunning) {
-        alert('Đang trong tiến trình Add Mail!');
-        return;
-    }
-
-    updateConfig();
-    const selectedMails = getSelectedMails();
-    const inputMails = parseInputMails();
-
-    if (selectedMails.length === 0) {
+async function startAddMailLogin() {
+    updateConfig(); // Thêm dòng này
+    const sourceMails = getSelectedSourceMails();
+    if (sourceMails.length === 0) {
         alert('Vui lòng chọn ít nhất một mail nguồn!');
         return;
     }
 
-    if (inputMails.length === 0) {
-        alert('Vui lòng nhập danh sách mail cần add!');
-        return;
-    }
-
-    // Reset counters
-    data.total = selectedMails.length;
-    data.processed = 0;
-    data.success = 0;
-    data.failed = 0;
-    updateStats();
-
-    // Update UI state
-    data.isRunning = true;
-    document.getElementById('add-mail-start-btn').disabled = true;
-    document.getElementById('add-mail-stop-btn').disabled = false;
-
+    // Disable login button and enable add mail button
+    document.getElementById('add-mail-login-btn').disabled = true;
+    
     try {
-        // Call Python function through eel
-        const result = await eel.run_add_mail({
+        const result = await eel.add_mail_process({
             data: {
-                sourceMails: selectedMails,
-                inputMails: inputMails,
+                sourceMails: sourceMails,
+                inputMails: [], // Empty array since we're just logging in
                 config: data.config
             }
         })();
 
         if (result && result.success) {
-            // Update các mail đã xử lý thành công
+            document.getElementById('add-mail-start-btn').disabled = false;
+            alert('Đăng nhập thành công!');
+        } else {
+            throw new Error(result.message || 'Login failed');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('Lỗi đăng nhập: ' + error.message);
+        document.getElementById('add-mail-login-btn').disabled = false;
+    }
+}
+// Update existing startAddMail function
+async function startAddMail() {
+    updateConfig(); // Thêm dòng này
+    const inputMails = parseInputMails();
+    if (inputMails.length === 0) {
+        alert('Vui lòng nhập danh sách mail cần add!');
+        return;
+    }
+
+    document.getElementById('add-mail-start-btn').disabled = true;
+    document.getElementById('add-mail-stop-btn').disabled = false;
+
+    try {
+        const result = await eel.add_mail_process({
+            data: {
+                sourceMails: getSelectedSourceMails(),
+                inputMails: inputMails,
+                config: data.config
+            }
+        })();
+        
+        handleAddMailResult(result);
+    } catch (error) {
+        console.error('Add mail error:', error);
+        alert('Lỗi thêm mail: ' + error.message);
+    } finally {
+        document.getElementById('add-mail-start-btn').disabled = false;
+        document.getElementById('add-mail-stop-btn').disabled = true;
+    }
+}
+function handleAddMailResult(result) {
+    if (result && result.success) {
+        // Cập nhật trạng thái cho các mail nguồn trong treeview
+        if (result.mailStatus) {
             const rows = document.querySelectorAll('#source-mail-tbody tr');
             rows.forEach(row => {
                 const mailCell = row.cells[2];
                 const statusCell = row.cells[4];
-                const statusData = result.mailStatus[mailCell.textContent];
+                const status = result.mailStatus[mailCell.textContent];
                 
-                if (mailCell && statusCell && statusData) {
-                    const status = statusData.success ? 'Success' : 'Failed';
-                    const icon = statusData.success ? '✓' : '❌';
-                    const color = statusData.success ? '#4ec9b0' : '#f44747';
-                    const message = statusData.message || status;
-                    statusCell.innerHTML = `<span style="color: ${color}">${icon} ${message}</span>`;
+                if (status) {
+                    const icon = status.status === 'Success' ? '✓' : '❌';
+                    const color = status.status === 'Success' ? '#4ec9b0' : '#f44747';
+                    statusCell.innerHTML = `<span style="color: ${color}">${icon} ${status.message}</span>`;
                 }
             });
-        } else {
-            throw new Error(result.message || 'Unknown error');
         }
-    } catch (error) {
-        console.error('Error during add mail process:', error);
-        alert('Có lỗi xảy ra trong quá trình thêm mail!');
-    } finally {
-        stopAddMail();
+
+        // Hiển thị kết quả add mail (cả thành công và thất bại)
+        if (result.results && result.results.length > 0) {
+            const outputArea = document.getElementById('add-mail-output');
+            if (outputArea) {
+                // Format kết quả: email|status|message|mail_nguon
+                const newResults = result.results
+                    .map(mail => {
+                        // Log để debug
+                        console.log("Kết quả add mail:", mail);
+                        
+                        if (mail.error) {
+                            // Mail thất bại
+                            return `${mail.email}|FAILED|${mail.error}|${mail.source_mail || ''}`;
+                        } else if (mail.full_info) {
+                            // Mail thành công
+                            return mail.full_info;
+                        }
+                    })
+                    .filter(Boolean) // Lọc bỏ undefined/null
+                    .join('\n');
+
+                // Thêm kết quả mới vào output area, giữ lại kết quả cũ
+                outputArea.value = outputArea.value 
+                    ? outputArea.value + '\n' + newResults 
+                    : newResults;
+
+                // Hiển thị toast thông báo tổng kết
+                const successCount = result.results.filter(m => m.full_info).length;
+                const failedCount = result.results.filter(m => m.error).length;
+                showToast(`Đã xử lý ${result.results.length} mail (${successCount} thành công, ${failedCount} thất bại)`, 'info');
+            }
+        }
+
+        // Cập nhật số liệu thống kê
+        document.getElementById('processed-mail').textContent = result.processed || 0;
+        document.getElementById('success-mail').textContent = result.success || 0;
+        document.getElementById('failed-mail').textContent = result.failed || 0;
+    } else {
+        alert('Lỗi: ' + (result.message || 'Không thể thêm mail'));
     }
+}
+// Thêm các hàm phụ trợ
+function copyAddMailOutput() {
+    const outputArea = document.getElementById('add-mail-output');
+    if (outputArea && outputArea.value) {
+        navigator.clipboard.writeText(outputArea.value)
+            .then(() => showToast('Đã copy kết quả!', 'success'))
+            .catch(() => alert('Không thể copy. Vui lòng thử lại!'));
+    }
+}
+
+function clearAddMailOutput() {
+    const outputArea = document.getElementById('add-mail-output');
+    if (outputArea) {
+        outputArea.value = '';
+        showToast('Đã xóa kết quả!', 'success');
+    }
+}
+// Thêm hàm hiển thị thông báo toast (có thể thêm vào)
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+function updateMailSourceStatus(mailStatus) {
+    const rows = document.querySelectorAll('#source-mail-tbody tr');
+    rows.forEach(row => {
+        const mailCell = row.cells[2];
+        const statusCell = row.cells[4];
+        const status = mailStatus[mailCell.textContent];
+        
+        if (status) {
+            const icon = status.status === 'Success' ? '✓' : '❌';
+            const color = status.status === 'Success' ? '#4ec9b0' : '#f44747';
+            statusCell.innerHTML = `<span style="color: ${color}">${icon} ${status.message}</span>`;
+        }
+    });
 }
 
 function stopAddMail() {
@@ -403,44 +510,42 @@ function exportAddMailData() {
     }
 }
 
-// Listen for updates from Python
 eel.expose(updateAddMailProgress);
 function updateAddMailProgress(progress) {
     if (progress && typeof progress === 'object') {
-        data.processed = progress.processed || 0;
-        data.success = progress.success || 0;
-        data.failed = progress.failed || 0;
-        
-        // Cập nhật status cho từng mail nếu có
-        if (progress.mailStatus) {
-            const rows = document.querySelectorAll('#source-mail-tbody tr');
-            rows.forEach(row => {
-                const mailCell = row.cells[2];
-                const statusCell = row.cells[4];
-                const statusData = progress.mailStatus[mailCell.textContent];
-                
-                if (mailCell && statusCell && statusData) {
-                    const icon = statusData.status === 'Success' ? '✓' : '❌';
-                    const color = statusData.status === 'Success' ? '#4ec9b0' : '#f44747';
-                    const message = statusData.message;
-                    statusCell.innerHTML = `<span style="color: ${color}">${icon} ${message}</span>`;
-                }
-            });
-        }
+        // Cập nhật số liệu
+        document.getElementById('processed-mail').textContent = progress.processed || 0;
+        document.getElementById('success-mail').textContent = progress.success || 0;
+        document.getElementById('failed-mail').textContent = progress.failed || 0;
 
-        // Cập nhật danh sách mail đã add với mail nguồn
-        if (progress.results) {
-            const addMailInput = document.getElementById('add-mail-input');
-            if (addMailInput) {
-                // Hiển thị mail|pass|mail nguồn cho các mail đã add thành công
-                addMailInput.value = progress.results
-                    .filter(mail => mail.full_info)  // Chỉ lấy những mail đã add thành công
-                    .map(mail => mail.full_info)
-                    .join('\n');
+        // Cập nhật kết quả add mail
+        if (progress.results && progress.results.length > 0) {
+            const outputArea = document.getElementById('add-mail-output');
+            if (outputArea) {
+                const newResults = progress.results.map(result => {
+                    if (result.error) {
+                        return `${result.email}|FAILED: ${result.error}|FROM: ${result.source_mail}`;
+                    } else {
+                        return `${result.email}|${result.password}|FROM: ${result.source_mail}|${result.message}`;
+                    }
+                }).join('\n');
+
+                // Thêm kết quả mới vào cuối
+                if (outputArea.value) {
+                    outputArea.value += '\n' + newResults;
+                } else {
+                    outputArea.value = newResults;
+                }
+
+                // Tự động cuộn xuống cuối
+                outputArea.scrollTop = outputArea.scrollHeight;
             }
         }
-        
-        updateStats();
+
+        // Cập nhật trạng thái mail nguồn
+        if (progress.mailStatus) {
+            updateMailSourceStatus(progress.mailStatus);
+        }
     }
 }
 

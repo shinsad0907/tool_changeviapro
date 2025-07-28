@@ -162,8 +162,8 @@ function addScanFriendMailsFromText(text) {
             <td><input type="checkbox" class="tree-row-checkbox" onchange="updateTreeSelectedCount()"></td>
             <td>${currentRowCount + 1}</td>
             <td>${parts[0] || ''}</td>
+            <td>${parts[1] || ''}</td>
             <td>${parts[2] || ''}</td>
-            <td>${parts[3] || ''}</td>
             <td></td>
         `;
         
@@ -426,4 +426,63 @@ function stopScanFriend() {
             stopBtn.textContent = "⏹️ STOP SCAN";
         }
     }, 3000);
+}
+// Add near the top of the file, with other eel.expose functions
+
+eel.expose(statusscan);
+function statusscan(uid, status, color) {
+    // Update the table row status first to ensure correct ordering
+    const rows = document.querySelectorAll('#treeview-table tbody tr');
+    let rowIndex = -1;
+    
+    rows.forEach((row, index) => {
+        const uidCell = row.cells[2];
+        if (uidCell && uidCell.textContent === uid) {
+            rowIndex = index; // Lưu lại vị trí của UID trong bảng
+            const statusCell = row.cells[5];
+            if (statusCell) {
+                statusCell.innerHTML = `<span style="color: ${color}">${status}</span>`;
+            }
+        }
+    });
+
+    // Update the scan result text area with correct ordering
+    const resultDiv = document.getElementById("scan-result-text");
+    if (resultDiv) {
+        // Tạo hoặc cập nhật dòng kết quả theo đúng thứ tự
+        let line;
+        const existingLine = resultDiv.querySelector(`[data-row-index="${rowIndex}"]`);
+        
+        if (existingLine) {
+            // Cập nhật dòng hiện có
+            existingLine.textContent = `UID: ${uid} - Status: ${status}`;
+            existingLine.style.color = color;
+        } else {
+            // Tạo dòng mới với thuộc tính data-row-index
+            line = document.createElement("div");
+            line.textContent = `UID: ${uid} - Status: ${status}`;
+            line.style.color = color;
+            line.setAttribute('data-row-index', rowIndex);
+
+            // Chèn vào đúng vị trí
+            const allLines = resultDiv.children;
+            let inserted = false;
+
+            for (let i = 0; i < allLines.length; i++) {
+                const currentIndex = parseInt(allLines[i].getAttribute('data-row-index'));
+                if (currentIndex > rowIndex) {
+                    resultDiv.insertBefore(line, allLines[i]);
+                    inserted = true;
+                    break;
+                }
+            }
+
+            // Nếu chưa chèn được (vị trí cuối cùng), thêm vào cuối
+            if (!inserted) {
+                resultDiv.appendChild(line);
+            }
+        }
+
+        resultDiv.scrollTop = resultDiv.scrollHeight;
+    }
 }

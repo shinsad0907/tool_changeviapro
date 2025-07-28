@@ -451,6 +451,7 @@
                         </div>
 
                         <!-- BẢNG PHẢI: TEXT AREA NHẬP MAIL -->
+                        <!-- Thêm vào phần bảng phải sau textarea input -->
                         <div class="data-table-container" style="flex: 1;">
                             <div class="table-header">
                                 <div class="table-title">📥 NHẬP MAIL MỚI</div>
@@ -459,10 +460,23 @@
                                     <button class="copy-btn" onclick="pasteAddMailFromClipboard()">📋 Paste</button>
                                 </div>
                             </div>
+                            <!-- Thêm vào sau input area -->
                             <div class="table-wrapper" style="height: 300px;">
                                 <textarea id="add-mail-input" class="form-control" 
-                                        style="height: 100%; resize: none; font-family: monospace; font-size: 0.9rem;" 
-                                        placeholder="Nhập danh sách mail theo định dạng:&#10;MAIL|PASSWORD&#10;example@gmail.com|pass123&#10;example2@gmail.com|pass456"></textarea>
+                                        style="height: 45%; resize: none; font-family: monospace; font-size: 0.9rem;" 
+                                        placeholder="Nhập danh sách mail theo định dạng:&#10;MAIL|PASSWORD&#10;example@gmail.com|pass123"></textarea>
+                                
+                                <!-- Thêm output area -->
+                                <div class="table-header" style="margin-top: 10px;">
+                                    <div class="table-title">📤 KẾT QUẢ ADD MAIL</div>
+                                    <div class="table-actions">
+                                        <button class="copy-btn" onclick="copyAddMailOutput()">📋 Copy</button>
+                                        <button class="copy-btn" onclick="clearAddMailOutput()">🗑️ Clear</button>
+                                    </div>
+                                </div>
+                                <textarea id="add-mail-output" class="form-control" readonly
+                                        style="height: 45%; resize: none; font-family: monospace; font-size: 0.9rem; margin-top: 10px;"
+                                        placeholder="Kết quả add mail sẽ hiển thị ở đây..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -496,7 +510,7 @@
                         <div class="form-group">
                             <label class="form-label">Số luồng:</label>
                             <input type="number" id="add-mail-thread-count" class="form-control" 
-                                value="17" min="1" max="10">
+                                value="17" min="1" max="50">  <!-- Tăng max lên 50 hoặc số mong muốn -->
                         </div>
 
                         <div class="form-group">
@@ -506,10 +520,14 @@
                         </div>
                     </div>
 
+                    <!-- In the add-mail tab, update the actions-panel section -->
                     <div class="actions-panel">
                         <div class="file-output-label">📁 MAIL OUTPUT</div>
-                        <button class="action-button btn-start" id="add-mail-start-btn" onclick="startAddMail()">
-                            ▶️ START ADD
+                        <button class="action-button btn-start" id="add-mail-login-btn" onclick="startAddMailLogin()">
+                            🔑 LOGIN
+                        </button>
+                        <button class="action-button btn-start" id="add-mail-start-btn" onclick="startAddMail()" disabled>
+                            ➕ ADD MAIL
                         </button>
                         <button class="action-button btn-stop" id="add-mail-stop-btn" onclick="stopAddMail()" disabled>
                             ⏹️ STOP

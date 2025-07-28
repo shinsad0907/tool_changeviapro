@@ -10,6 +10,9 @@ from selenium.webdriver.chrome.options import Options
 import requests
 import eel
 from typing import Dict, List
+import tempfile
+import shutil
+
 
 # Khởi tạo biến để kiểm soát luồng
 chrome_drivers = {}
@@ -39,45 +42,98 @@ class Get2FA:
         self.setup_driver()
         
     def setup_driver(self):
+        try:
+            profile_path = os.path.join(tempfile.gettempdir(), f"chrome_profile_{self.window_index}")
+            if os.path.exists(profile_path):
+                shutil.rmtree(profile_path)
+                print(f"Deleted existing Chrome profile: {profile_path}")
+        except Exception as e:
+            print(f"Error deleting existing Chrome profile: {e}")
         options = Options()
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-software-rasterizer")
-        options.add_argument("--disable-infobars")
-        options.add_argument("--disable-web-security")
-        options.add_argument("--disable-features=VizDisplayCompositor")
-        options.add_argument("--window-size=400,600")  # Cố định kích thước cửa sổ
         
+        # Tắt các tính năng phát hiện automation
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        
+        # Fake User Agent thực tế
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0",
+        ]
+        import random
+        options.add_argument(f"--user-agent={random.choice(user_agents)}")
+        
+        # Tạo profile người dùng riêng (quan trọng!)
+        import os
+        profile_path = os.path.join(tempfile.gettempdir(), f"chrome_profile_{self.window_index}")
+        options.add_argument(f"--user-data-dir={profile_path}")
+        
+        # Các tùy chọn để giả lập trình duyệt thực
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-software-rasterizer")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-plugins")
+        options.add_argument("--disable-images")  # Tắt hình ảnh để tăng tốc
+        options.add_argument("--disable-javascript")  # Có thể bỏ nếu cần JS
+        options.add_argument("--window-size=400,600")
+        
+        # Fake thêm thông tin trình duyệt
+        options.add_argument("--disable-default-apps")
+        options.add_argument("--no-first-run")
+        options.add_argument("--disable-sync")
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-backgrounding-occluded-windows")
+        options.add_argument("--disable-renderer-backgrounding")
+        options.add_argument("--disable-features=TranslateUI")
+        
+        # Cấu hình preferences chi tiết
         prefs = {
-            "profile.default_content_setting_values.notifications": 2,
+            "profile.default_content_setting_values": {
+                "notifications": 2,
+                "media_stream": 2,
+                "geolocation": 2
+            },
             "credentials_enable_service": False,
-            "profile.password_manager_enabled": False
+            "profile.password_manager_enabled": False,
+            "profile.default_content_settings.popups": 0,
+            "managed_default_content_settings.images": 2,
+            "profile.managed_default_content_settings.media_stream": 2,
+            # Thêm các tùy chọn mới để xóa dữ liệu
+            "profile.clear_data": {
+                "browsing_history": True,
+                "download_history": True,
+                "passwords": True,
+                "form_data": True,
+                "cache": True,
+                "cookies": True
+            },
+            "profile.clear_data_on_exit": True,
+            "profile.default_content_settings.cookies": 2,
+            "profile.exit_type": "Normal"
         }
         options.add_experimental_option("prefs", prefs)
         
-        # Tính toán vị trí cửa sổ được cải thiện
+        # Tính toán vị trí cửa sổ
         SCREEN_WIDTH = 1920
         SCREEN_HEIGHT = 1080
         WINDOW_WIDTH = 400
         WINDOW_HEIGHT = 600
         
-        # Tính số cột có thể hiển thị
         COLUMNS = SCREEN_WIDTH // WINDOW_WIDTH
         ROWS = SCREEN_HEIGHT // WINDOW_HEIGHT
         
-        # Tính vị trí dựa trên window_index
         row = self.window_index // COLUMNS
         col = self.window_index % COLUMNS
         
-        # Đảm bảo không vượt quá màn hình
         if row >= ROWS:
             row = row % ROWS
         
         x = col * WINDOW_WIDTH
         y = row * WINDOW_HEIGHT
         
-        # Đảm bảo không vượt quá màn hình
         if x + WINDOW_WIDTH > SCREEN_WIDTH:
             x = SCREEN_WIDTH - WINDOW_WIDTH
         if y + WINDOW_HEIGHT > SCREEN_HEIGHT:
@@ -85,28 +141,77 @@ class Get2FA:
         
         print(f"Tạo cửa sổ {self.window_index} tại vị trí ({x}, {y})")
         
+  
         self.driver = webdriver.Chrome(options=options)
         
-        # Thiết lập vị trí và kích thước cửa sổ
+        # Thiết lập vị trí và kích thước
         self.driver.set_window_position(x, y)
         self.driver.set_window_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         
-        # Thêm delay nhỏ để tránh conflict
-        time.sleep(1)
+        # Script để ẩn dấu hiệu WebDriver (QUAN TRỌNG!)
+        self.driver.execute_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+            });
+            
+            // Fake chrome object
+            window.chrome = {
+                runtime: {},
+                loadTimes: function() {},
+                csi: function() {},
+                app: {}
+            };
+            
+            // Fake plugins
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [1, 2, 3, 4, 5],
+            });
+            
+            // Fake languages
+            Object.defineProperty(navigator, 'languages', {
+                get: () => ['en-US', 'en'],
+            });
+            
+            // Fake permissions
+            const originalQuery = window.navigator.permissions.query;
+            window.navigator.permissions.query = (parameters) => (
+                parameters.name === 'notifications' ?
+                Promise.resolve({ state: Notification.permission }) :
+                originalQuery(parameters)
+            );
+        """)
         
+        # Thêm delay và random behavior
+        time.sleep(random.uniform(1, 3))
+        
+        # Đi đến Facebook với delay tự nhiên
         self.driver.get("https://www.facebook.com")
-
+        time.sleep(random.uniform(2, 4))
+      
     def meta_2FA(self,account):
         self.driver.get("https://auth.meta.com/")
+        self.wait_and_click("/html/body/div[3]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div/div/div/div/div/div[1]/div[2]/div/div")
         self.wait_and_click("/html/body/div[1]/div/div/div/div/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div[1]/div/div/div/div/div[2]/div/div/div")
         self.wait_and_click("/html/body/div[1]/div/div/div/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[2]/div/div[1]/div[1]/div/div")
         self.wait_and_click("/html/body/div[1]/div/div/div/div/div/div/div[1]/div[1]/div/div/div[1]/div[2]/div/div/div[4]/label/div[1]/input")
         self.wait_and_click("/html/body/div[1]/div/div/div/div/div/div/div[1]/div[1]/div/div/div[1]/div[3]/div/div/div[2]/div/div[1]/div[1]/div/div")
-        for i in range(100):
-            if self.driver.current_url == "https://auth.meta.com/language":
-                self.run_change_2fa(account)
+        eel.update2FAResult(account['uid'], "meta", "✅ Thành công tạo meta")()
+        error_xpath_options = [
+            "/html/body/div/div[2]/div/div[2]/main/h2",
+            "/html/body/div/div[2]/div/div[2]/main/div/div/div[1]/div/div/div[1]/div/div[1]/span",
+        ]
+        
+        # Try each xpath until we find text or run out of options
+        for xpath in error_xpath_options:
+            check = self.wait_and_get_text(xpath, timeout=5)
+            if check:
+                eel.update2FAResult(account['uid'], "meta", "✅ Thành công tạo meta")()
+                self.driver.quit()
             else:
-                pass
+                time.sleep(1)
+        self.driver.quit()
+
+        
 # tạo tài khoản 
 # 
 # /html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div[1]/div[1]
@@ -160,7 +265,7 @@ class Get2FA:
                         "/html/body/div[1]/div/div/div/div[1]/div/div/div[1]/div[1]/div/div[1]/div[1]/div[2]/div/div/div/div[2]/div/main/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/div[1]"
                     ]:
                         try:
-                            self.wait_and_click(xpath, timeout=10)
+                            self.wait_and_click(xpath, timeout=5)
                             click_success = True
                             break
                         except:
@@ -178,7 +283,7 @@ class Get2FA:
                         "/html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div/div"
                     ]:
                         try:
-                            self.wait_and_click(xpath, timeout=10)
+                            self.wait_and_click(xpath, timeout=5)
                             setup_success = True
                             break
                         except:
@@ -197,11 +302,12 @@ class Get2FA:
                 
                 # If neither condition is met
                 print("Verification required via email or WhatsApp")
-                eel.update2FAResult(account['uid'], "mail whatsapp", "⚠️ Verification required via email or WhatsApp")()
-                if self.driver:
-                    self.driver.quit()
-                    self.driver = None
-                return False
+                self.meta_2FA(account)
+                # eel.update2FAResult(account['uid'], "mail whatsapp", "⚠️ Verification required via email or WhatsApp")()
+                # if self.driver:
+                #     self.driver.quit()
+                #     self.driver = None
+                # return False
                 
             except Exception as e:
                 print(f"Error during code check: {e}")
@@ -216,12 +322,12 @@ class Get2FA:
                 
                 # If neither condition is met
                 print("Verification required via email or WhatsApp")
-                # self.meta_2FA(account)
-                eel.update2FAResult(account['uid'], "", "⚠️ Verification required via email or WhatsApp")()
-                if self.driver:
-                    self.driver.quit()
-                    self.driver = None
-                return False
+                self.meta_2FA(account)
+                # eel.update2FAResult(account['uid'], "", "⚠️ Verification required via email or WhatsApp")()
+                # if self.driver:
+                #     # self.driver.quit()
+                #     self.driver = None
+                # return False
                 
             except Exception as e:
                 print(f"Error during code check: {e}")
@@ -333,7 +439,7 @@ class Get2FA:
             self.wait_and_click("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div/div/div[2]/div/div[1]")
             self.wait_and_click("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div[2]/div/div/div/div/div/div[1]")
             self.wait_and_click("/html/body/div[6]/div[1]/div/div[2]/div/div/div/div[3]/div[2]/div/div/div")
-            
+            # /html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div[2]/div/div/div/div[2]/div/div[1]
             if self.wait_and_get_text("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[4]/div[2]/div[1]/div/div/div[1]/div/h2/span"):
                 self.wait_and_click("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div/div")
                 print("Đã xóa email thành công")
@@ -389,7 +495,7 @@ class Get2FA:
                             print(f"Thread bị dừng, bỏ qua account: {account['uid']}")
                             return False
                     
-                    self.wait_and_click(xpath, timeout=10)
+                    self.wait_and_click(xpath, timeout=5)
                     click_success = True
                     break
                 except:
@@ -398,8 +504,9 @@ class Get2FA:
             # Thử các xpath để setup 2FA
             setup_xpath_options = [
                 "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div[1]",
-                "/html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div/div"
-                "/html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[1]/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div[1]/div"
+                "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div[1]/div[1]",
+                "/html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div/div",
+                "/html/body/div[1]/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[1]/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div[1]/div",
             ]
             
             setup_success = False
@@ -411,7 +518,7 @@ class Get2FA:
                             print(f"Thread bị dừng, bỏ qua account: {account['uid']}")
                             return False
                     
-                    self.wait_and_click(xpath, timeout=10)
+                    self.wait_and_click(xpath, timeout=5)
                     
                     # Check for error messages after clicking setup button
                     if not self.check_code(account):
@@ -428,7 +535,10 @@ class Get2FA:
             # Click để tiếp tục setup
             continue_xpath_options = [
                 "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div",
-                "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[3]/div/div/div/div/div/div/div/div/div"
+                "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[3]/div/div/div/div/div/div/div/div/div",
+                "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[2]/div/div/div/div/div/div/div/div/div",
+                "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[4]/div/div/div/div/div/div/div/div/div",
+                "/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[2]/div/div[5]/div/div/div/div/div/div/div/div/div",
             ]
             
             for xpath in continue_xpath_options:
@@ -439,7 +549,7 @@ class Get2FA:
                             print(f"Thread bị dừng, bỏ qua account: {account['uid']}")
                             return False
                     
-                    self.wait_and_click(xpath, timeout=10)
+                    self.wait_and_click(xpath, timeout=5)
                     break
                 except:
                     continue
@@ -447,7 +557,6 @@ class Get2FA:
             time.sleep(10)
             # Lấy mã 2FA
             ma_2fa = self.wait_and_get_text("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[3]/div/div[4]/div[2]/div[1]/div/div/div[4]/div[2]/div/div/div/div[1]/span")
-            
             if not ma_2fa:
                 raise Exception("Không thể lấy mã 2FA")
             
@@ -467,19 +576,17 @@ class Get2FA:
             
             # Click tiếp tục
             self.wait_and_click("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[3]/div/div[5]/div/div/div/div/div/div/div/div/div")
-            
             # Nhập code 2FA
             self.wait_and_send_keys("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[4]/div/div[4]/div[2]/div[1]/div/div/div[2]/div/div/div[1]/input", code_2fa)
-            
             # Click xác nhận
             self.wait_and_click("/html/body/div[1]/div/div/div/div/div[3]/div/div/div[2]/div/div/div/div/div/div[4]/div/div[5]/div/div/div/div/div/div/div/div/div")
-            
             # Nhập password để xác nhận
+            eel.update2FAResult(account['uid'], ma_2fa, "✅ Thành công")()
             password_xpath_options = [
                 "/html/body/div[6]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[3]/div/div/div/div[1]/input",
                 "/html/body/div[7]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[3]/div/div/div/div[1]/input",
                 "/html/body/div[8]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[3]/div/div/div/div[1]/input",
-                "/html/body/div[9]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[3]/div/div/div/div[1]/input"
+                "/html/body/div[9]/div[1]/div/div[2]/div/div/div/div/div/div/div[4]/div[2]/div[1]/div/div/div[3]/div/div/div/div[1]/input",
             ]
             
             password_entered = False
@@ -543,7 +650,7 @@ class Get2FA:
         except Exception as e:
             error_message = f"Lỗi khi xử lý 2FA: {str(e)}"
             print(f"❌ {account['uid']}: {error_message}")
-            eel.update2FAResult(account['uid'], "", f"❌ {error_message}")()
+            # eel.update2FAResult(account['uid'], "", f"❌ {error_message}")()
             return False
         finally:
             # Đảm bảo đóng driver
@@ -554,11 +661,21 @@ class Get2FA:
                 pass
 
     def cleanup(self):
-        """Hàm cleanup để đóng driver"""
+        """Hàm cleanup để đóng driver và xóa profile"""
+        import shutil
         try:
             if self.driver:
                 self.driver.quit()
                 self.driver = None
+                # Delete Chrome profile directory
+                profile_path = os.path.join(tempfile.gettempdir(), f"chrome_profile_{self.window_index}")
+                try:
+                    import shutil
+                    if os.path.exists(profile_path):
+                        shutil.rmtree(profile_path)
+                        print(f"Deleted Chrome profile: {profile_path}")
+                except Exception as e:
+                    print(f"Error deleting Chrome profile: {e}")
         except:
             pass
 
@@ -602,7 +719,7 @@ def process_accounts_thread(accounts, thread_id, start_window_index):
         except Exception as e:
             print(f"❌ Lỗi xử lý {account['uid']}: {e}")
             # Cập nhật UI với lỗi
-            eel.update2FAResult(account['uid'], "", f"❌ Lỗi: {str(e)}")()
+            # eel.update2FAResult(account['uid'], "", f"❌ Lỗi: {str(e)}")()
         finally:
             # Đảm bảo cleanup driver
             if get2fa:

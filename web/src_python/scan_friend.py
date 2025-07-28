@@ -96,6 +96,7 @@ class main_scan_friend:
             print(f"Lỗi khi click vào {xpath}: {e}")
 
     def open_friend_list(self, uid):
+        print(f"Đang mở danh sách bạn bè của UID: {uid}")
         self.driver.get(f"https://www.facebook.com/{uid}")
 
     def get_sources(self, uid=None):
@@ -153,7 +154,6 @@ def thread_scan_friend(data_scan_friend):
                 try:
                     print(f"[Thread {idx}] Đang mở bạn bè UID: {uid}")
                     instance.open_friend_list(uid)
-                    
                     # Kiểm tra stop_scanning sau mỗi bước
                     if stop_scanning:
                         break
@@ -174,9 +174,9 @@ def thread_scan_friend(data_scan_friend):
                     else:
                         eel.statusscan(uid, text_friend, "#4ec9b0")
 
-                    # Delay giữa các UID
-                    if delay > 0:
-                        time.sleep(delay)
+                    # # Delay giữa các UID
+                    # if delay > 0:
+                    #     time.sleep(delay)
 
                 except Exception as e:
                     print(f"[Thread {idx}] Lỗi xử lý UID {uid}: {e}")
