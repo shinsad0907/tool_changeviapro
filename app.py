@@ -4,6 +4,7 @@ import threading
 import json
 from web.src_python.change_pass import thread
 from web.src_python.scan_friend import thread_scan_friend
+from web.src_python.read_onetmail import start_read_mail
 import os
 from web.src_python.check_key import check_key
 from web.src_python.get2fa import start_2fa_process
@@ -17,7 +18,12 @@ import datetime
 eel.init('web')  # Folder chứa file HTML
 KEY_FILE = r'data/key.json'
 VERSION_CLIENT_PATH = r'data/version_client.json'
-
+@eel.expose
+def browse_driver_path():
+    root = tk.Tk()
+    root.withdraw()  # Ẩn cửa sổ chính
+    folder_selected = filedialog.askdirectory(title="Chọn thư mục chứa LDPlayer")
+    return folder_selected
 @eel.expose
 def save_config_json(data):
     try:
@@ -40,6 +46,10 @@ def start_scan_friend_process(data):
 @eel.expose
 def start_get_2fa_process(data):
     start_2fa_process(data)
+
+@eel.expose
+def start_read_mail_process(data):
+    start_read_mail(data)
 
 @eel.expose
 def run_add_mail(data):

@@ -22,6 +22,10 @@
                 <button class="tab-button active" onclick="switchTab('change-pass')">
                     🔄 CHANGE PASSWORD
                 </button>
+                <!-- Add this button in the tab-nav div -->
+                <button class="tab-button" onclick="switchTab('change-mail')">
+                    ✉️ CHANGE MAIL
+                </button>
                 <button class="tab-button" onclick="switchTab('forgot-pass')">
                     🔓 FORGOT PASSWORD
                 </button>
@@ -34,7 +38,314 @@
                 <button class="tab-button" onclick="switchTab('add-mail')">
                     ✉️ ADD MAIL
                 </button>
+                <button class="tab-button" onclick="switchTab('read-mail')">
+                    📬 READ MAIL
+                </button>
+
+                
             </div>
+
+            <!-- Add this code after the add-mail tab and before the footer -->
+            <div id="change-mail" class="tab-pane">
+                <div class="tab-content" style="display: flex; gap: 16px;">
+
+                    <!-- Cột 1: Danh sách device -->
+                    <div class="data-table-container" style="flex: 0 0 300px;">
+                        <div class="table-header">
+                            <div class="table-title">📱 DANH SÁCH DEVICE</div>
+                            <div class="table-actions" style="display: flex; gap: 4px;">
+                                <button class="copy-btn" onclick="loadDevices()">🔄 Load</button>
+                                <button class="copy-btn" onclick="createDevice()">➕ Tạo</button>
+                                <button class="copy-btn" onclick="openLDPlayerSettings()">⚙️ Setting</button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper" style="max-height: 200px; overflow: auto;">
+                            <table class="data-table" id="device-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="device-select-all" onchange="toggleDeviceSelectAll()"></th>
+                                        <th>STT</th>
+                                        <th>DEVICE</th>
+                                        <th>OPEN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="device-tbody">
+                                    <tr>
+                                        <td><input type="checkbox" class="device-row-checkbox" onchange="updateDeviceSelectedCount()"></td>
+                                        <td>1</td>
+                                        <td>LDPlayer-1</td>
+                                        <td><button class="copy-btn" onclick="openDevice('LDPlayer-1')">▶️</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="device-row-checkbox" onchange="updateDeviceSelectedCount()"></td>
+                                        <td>2</td>
+                                        <td>LDPlayer-2</td>
+                                        <td><button class="copy-btn" onclick="openDevice('LDPlayer-2')">▶️</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- Cột 2: Danh sách tài khoản -->
+                    <div class="data-table-container" style="flex: 1;">
+                        <div class="table-header">
+                            <div class="table-title">👤 DANH SÁCH TÀI KHOẢN</div>
+                            <div class="selected-count" id="change-mail-selected-count">Đã chọn: 0</div>
+                        </div>
+                        <div class="table-wrapper" style="max-height: 400px; overflow: auto;">
+                            <table class="data-table" id="change-mail-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="change-mail-select-all" onchange="toggleChangeMailSelectAll()"></th>
+                                        <th>STT</th>
+                                        <th>UID</th>
+                                        <th>PASS</th>
+                                        <th>COOKIE</th>
+                                        <th>MAIL</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="change-mail-tbody">
+                                    <tr>
+                                        <td><input type="checkbox" class="change-mail-row-checkbox" onchange="updateChangeMailSelectedCount()"></td>
+                                        <td>1</td>
+                                        <td>100001234567890</td>
+                                        <td>pass123</td>
+                                        <td>c_user=100001234567890...</td>
+                                        <td>old@mail.com</td>
+                                        <td><span style="color: #4ec9b0;">✓ Ready</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Cột 3: Nhập mail mới & Lấy mã xác nhận -->
+                    <div style="flex: 0 0 320px; display: flex; flex-direction: column; gap: 12px;">
+                        
+                        <!-- Nhập mail -->
+                        <div class="data-table-container">
+                            <div class="table-header">
+                                <div class="table-title">📧 NHẬP MAIL MỚI</div>
+                                <div class="table-actions">
+                                    <button class="copy-btn" onclick="clearChangeMailInput()">🗑️ Clear</button>
+                                    <button class="copy-btn" onclick="pasteChangeMailFromClipboard()">📋 Paste</button>
+                                </div>
+                            </div>
+                            <textarea id="change-mail-input" class="form-control" 
+                                style="height: 150px; resize: none; font-family: monospace; font-size: 0.9rem;" 
+                                placeholder="Nhập danh sách mail:&#10;example@gmail.com&#10;another@gmail.com"></textarea>
+                        </div>
+
+                        <!-- Lấy mã xác nhận email -->
+                        <!-- Lấy mã xác nhận email -->
+                        <div class="data-table-container">
+                            <div class="table-header">
+                                <div class="table-title">📨 MÃ XÁC NHẬN EMAIL</div>
+                                <div class="table-actions">
+                                    <button class="copy-btn" onclick="refreshEmailCodeTable()">🔄 Get</button>
+                                    <button class="copy-btn" onclick="clearEmailCodeTable()">🗑️ Clear</button>
+                                </div>
+                            </div>
+                            <div class="table-wrapper" style="max-height: 150px; overflow: auto;">
+                                <table class="data-table" id="email-code-table">
+                                    <thead>
+                                        <tr>
+                                            <th>STT</th>
+                                            <th>MAIL</th>
+                                            <th>PASS</th>
+                                            <th>CODE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="email-code-tbody">
+                                        <!-- Dữ liệu sẽ được thêm bằng JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+                <!-- Nút Cài FB & Chỉnh ngôn ngữ -->
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <button class="action-button btn-start" onclick="installFacebook()">📥 Cài Facebook</button>
+                    <button class="action-button btn-start" onclick="changeLanguage()">🌐 Chỉnh ngôn ngữ</button>
+                </div>
+
+                <!-- Popup Setting -->
+                <div id="ldplayer-settings-modal" class="modal" style="display:none;">
+                    <div class="modal-content" style="max-width: 400px;">
+                        <span class="close" onclick="closeLDPlayerSettings()">&times;</span>
+                        <h2>⚙️ Cấu hình LDPlayer</h2>
+
+                        <div class="form-group">
+                            <label>Chiều ngang (px):</label>
+                            <input type="number" id="ld-width" class="form-control" value="300" min="200" max="2000">
+                        </div>
+                        <div class="form-group">
+                            <label>Chiều dọc (px):</label>
+                            <input type="number" id="ld-height" class="form-control" value="600" min="200" max="3000">
+                        </div>
+                        <div class="form-group">
+                            <label>DPI:</label>
+                            <input type="number" id="ld-dpi" class="form-control" value="160" min="100" max="600">
+                        </div>
+                        <div class="form-group">
+                            <label>CPU Core:</label>
+                            <select id="ld-cpu" class="form-control">
+                                <option>1 Core</option>
+                                <option>2 Core</option>
+                                <option>3 Core</option>
+                                <option selected>4 Core</option>
+                                <option>5 Core</option>
+                                <option>6 Core</option>
+                                <option>7 Core</option>
+                                <option>8 Core</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>RAM (MB):</label>
+                            <select id="ld-ram" class="form-control">
+                                <option>512</option>
+                                <option>768</option>
+                                <option>1024</option>
+                                <option>1536</option>
+                                <option>2048</option>
+                                <option>3072</option>
+                                <option selected>4096</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display: flex; gap: 8px; align-items: center;">
+                            <label class="form-label" style="flex: 0 0 120px;">Path driver</label>
+                            <input type="text" id="change-mail-driver-path" class="form-control" 
+                                placeholder="Nhập đường dẫn đến ldplayer" style="flex: 1;">
+                            <button type="button" class="copy-btn" onclick="browseDriverPath()">📂</button>
+                        </div>
+
+
+
+                        <div style="margin-top: 16px; text-align: right;">
+                            <button class="action-button btn-start" onclick="saveLDPlayerSettings()">💾 Lưu</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTROLS SECTION -->
+                <div class="controls-section" style="margin-top: 16px;">
+                    <div class="info-panel">
+                        <div class="panel-title">📊 THỐNG KÊ</div>
+                        <div class="info-item"><span class="info-label">Tổng tài khoản:</span><span class="info-value" id="change-mail-total">0</span></div>
+                        <div class="info-item"><span class="info-label">Đã xử lý:</span><span class="info-value" id="change-mail-processed">0</span></div>
+                        <div class="info-item"><span class="info-label">Thành công:</span><span class="info-value" id="change-mail-success">0</span></div>
+                        <div class="info-item"><span class="info-label">Thất bại:</span><span class="info-value" id="change-mail-failed">0</span></div>
+                    </div>
+
+                    <div class="config-panel">
+                        <div class="panel-title">⚙️ CẤU HÌNH</div>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="change-mail-use-proxy" checked>
+                                    <label for="change-mail-use-proxy" class="form-label">Dùng Proxy:</label>
+                                </div>
+                                <select id="change-mail-proxy-type" class="form-control" style="flex: 1;">
+                                    <option>Tmproxy.com</option>
+                                    <option>ProxyV6</option>
+                                    <option>911S5</option>
+                                    <option>ShopLike</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="change-mail-auto-cookie" checked>
+                                <label for="change-mail-auto-cookie" class="form-label">Tự nhập code mail</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Số luồng:</label>
+                            <input type="number" id="change-mail-thread-count" class="form-control" value="3" min="1" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Delay (ms):</label>
+                            <input type="number" id="change-mail-delay" class="form-control" value="1000" min="500" max="5000">
+                        </div>
+                    </div>
+
+                    <div class="actions-panel">
+                        <div class="file-output-label">📁 OUTPUT</div>
+                        <button class="action-button btn-start" id="open-ldplayer-btn" onclick="openLDPlayer()">🎮 OPEN LDPLAYER</button>
+                        <button class="action-button btn-start" id="change-mail-start-btn" onclick="startChangeMail()">✉️ BẮT ĐẦU CHANGE</button>
+                        <button class="action-button btn-stop" id="change-mail-stop-btn" onclick="stopChangeMail()" disabled>⏹️ DỪNG LẠI</button>
+                        <button class="action-button btn-export" onclick="exportChangeMailData()">📤 EXPORT DATA</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Read Mail Tab -->
+            <div id="read-mail" class="tab-pane">
+                <div class="tab-content" style="display: flex; flex-direction: column; gap: 12px;">
+                    
+                    <!-- Nhập dữ liệu -->
+                    <div class="data-table-container">
+                        <div class="table-header">
+                            <div class="table-title">📥 DANH SÁCH MAIL</div>
+                            <div class="table-actions">
+                                <button class="copy-btn" onclick="clearReadMailInput()">🗑️ Clear</button>
+                                <button class="copy-btn" onclick="pasteReadMailFromClipboard()">📋 Paste</button>
+                            </div>
+                        </div>
+                        <textarea id="read-mail-input" class="form-control" 
+                            style="height: 230px; resize: none; font-family: monospace; font-size: 0.85rem;" 
+                            placeholder="email|password|refresh_token|client_id&#10;example@mail.com|pass123|tokenabc|client123"></textarea>
+                        <!-- Cấu hình số luồng -->
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label class="form-label">Số luồng:</label>
+                            <input type="number" id="read-mail-thread-count" class="form-control" 
+                                value="3" min="1" max="20" style="width: 80px;">
+                        </div>
+                        <button id="read-mail-start-btn" class="action-button btn-start" style="margin-top: 8px;" onclick="startReadMail()">📬 Đọc hòm thư</button>
+                    </div>
+
+                    <!-- Bảng kết quả -->
+                    <div class="data-table-container" style="flex: 1;">
+                        <div class="table-header">
+                            <div class="table-title">📨 NỘI DUNG HÒM THƯ</div>
+                            <div class="table-actions">
+                                <button class="copy-btn" onclick="clearReadMailTable()">🗑️ Clear</button>
+                                <button class="copy-btn" onclick="exportReadMailData()">📤 Export</button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper" style="max-height: 400px; overflow: auto;">
+                            <table class="data-table" id="read-mail-table">
+                                <thead>
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Mail</th>
+                                        <th>From</th>
+                                        <th>Time</th>
+                                        <th>Content</th>
+                                        <th>scan-total-uid</th>
+                                        <th>Code</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="read-mail-tbody">
+                                    <tr><td colspan="6" style="text-align:center;">No result!</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
             
         <!-- Thay thế phần scan-friend tab trong code gốc -->
                         <!-- Scan Friend Tab -->
@@ -205,7 +516,7 @@
             <!-- Change Password Tab -->
             <div id="change-pass" class="tab-pane active">
                 <div class="tab-content">
-                    <div class="data-table-container">
+                    <div class="data-table-container">m,
                         <div class="table-header">
                             <div class="table-title">📋 DANH SÁCH TÀI KHOẢN</div>
                             <div class="selected-count" id="selected-count">Đã chọn: 0</div>
@@ -685,5 +996,7 @@
     <script src="src_script/scan_friend.js"></script>
     <script src="src_script/get2fa.js"></script>
     <script src="src_script/add_mail.js"></script>
+    <script src="src_script/change_mail.js"></script>
+    <script src="src_script/read_mail.js"></script>
 </body>
 </html>

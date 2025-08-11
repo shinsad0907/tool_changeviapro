@@ -38,12 +38,16 @@ function setupContextMenu() {
     `;
     document.body.appendChild(contextMenu);
 
-    document.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-        contextMenu.style.display = 'block';
-        contextMenu.style.left = e.pageX + 'px';
-        contextMenu.style.top = e.pageY + 'px';
-    });
+    const section = document.getElementById('change-pass');
+    if (section) {
+        section.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = e.pageX + 'px';
+            contextMenu.style.top = e.pageY + 'px';
+        });
+    }
+
 
     document.addEventListener('click', function () {
         contextMenu.style.display = 'none';

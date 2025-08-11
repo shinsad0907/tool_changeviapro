@@ -1,4 +1,6 @@
 import eel
+import tkinter as tk
+from tkinter import filedialog
 import time
 import threading
 import json
@@ -24,7 +26,12 @@ def save_config_json(data):
 @eel.expose
 def start_change_password_process(data):
     thread(data)
-
+@eel.expose
+def browse_driver_path():
+    root = tk.Tk()
+    root.withdraw()  # Ẩn cửa sổ chính
+    folder_selected = filedialog.askdirectory(title="Chọn thư mục chứa LDPlayer")
+    return folder_selected
 
 def is_key_activated():
     if not os.path.exists(KEY_FILE):

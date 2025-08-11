@@ -431,14 +431,11 @@ function stopScanFriend() {
 
 eel.expose(statusscan);
 function statusscan(uid, status, color) {
-    // Update the table row status first to ensure correct ordering
+    // Cập nhật status trong bảng
     const rows = document.querySelectorAll('#treeview-table tbody tr');
-    let rowIndex = -1;
-    
-    rows.forEach((row, index) => {
+    rows.forEach(row => {
         const uidCell = row.cells[2];
         if (uidCell && uidCell.textContent === uid) {
-            rowIndex = index; // Lưu lại vị trí của UID trong bảng
             const statusCell = row.cells[5];
             if (statusCell) {
                 statusCell.innerHTML = `<span style="color: ${color}">${status}</span>`;
@@ -446,40 +443,52 @@ function statusscan(uid, status, color) {
         }
     });
 
-    // Update the scan result text area with correct ordering
+    // Cập nhật kết quả trong scan-result-text
     const resultDiv = document.getElementById("scan-result-text");
     if (resultDiv) {
-        // Tạo hoặc cập nhật dòng kết quả theo đúng thứ tự
-        let line;
-        const existingLine = resultDiv.querySelector(`[data-row-index="${rowIndex}"]`);
-        
-        if (existingLine) {
-            // Cập nhật dòng hiện có
-            existingLine.textContent = `UID: ${uid} - Status: ${status}`;
-            existingLine.style.color = color;
-        } else {
-            // Tạo dòng mới với thuộc tính data-row-index
-            line = document.createElement("div");
-            line.textContent = `UID: ${uid} - Status: ${status}`;
-            line.style.color = color;
-            line.setAttribute('data-row-index', rowIndex);
+        // Tìm div hiện tại cho UID này nếu có
+        const existingDiv = Array.from(resultDiv.children).find(
+            div => div.getAttribute('data-uid') === uid
+        );
 
-            // Chèn vào đúng vị trí
-            const allLines = resultDiv.children;
+        if (existingDiv) {
+            // Cập nhật nội dung nếu div đã tồn tại
+            existingDiv.textContent = `UID: ${uid} - Status: ${status}`;
+            existingDiv.style.color = color;
+        } else {
+            // Tạo div mới nếu chưa có
+            const newDiv = document.createElement("div");
+            newDiv.textContent = `UID: ${uid} - Status: ${status}`;
+            newDiv.style.color = color;
+            newDiv.setAttribute('data-uid', uid);
+
+            // Lấy vị trí của UID trong danh sách gốc
+            const uidList = document.getElementById('scan-input-text')
+                .value.trim()
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line !== "");
+            
+            const uidIndex = uidList.indexOf(uid);
+
+            // Chèn div vào đúng vị trí
+            const allDivs = Array.from(resultDiv.children);
             let inserted = false;
 
-            for (let i = 0; i < allLines.length; i++) {
-                const currentIndex = parseInt(allLines[i].getAttribute('data-row-index'));
-                if (currentIndex > rowIndex) {
-                    resultDiv.insertBefore(line, allLines[i]);
+            for (let i = 0; i < allDivs.length; i++) {
+                const currentUid = allDivs[i].getAttribute('data-uid');
+                const currentIndex = uidList.indexOf(currentUid);
+                
+                if (currentIndex > uidIndex) {
+                    resultDiv.insertBefore(newDiv, allDivs[i]);
                     inserted = true;
                     break;
                 }
             }
 
-            // Nếu chưa chèn được (vị trí cuối cùng), thêm vào cuối
+            // Nếu chưa chèn được, thêm vào cuối
             if (!inserted) {
-                resultDiv.appendChild(line);
+                resultDiv.appendChild(newDiv);
             }
         }
 
