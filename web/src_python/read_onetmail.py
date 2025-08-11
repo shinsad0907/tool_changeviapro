@@ -43,6 +43,7 @@ class ReadOneMail:
 
     def process_mail(self, msg, body_text, body_html):
         mailadd = self.mail_data["mailadd"]
+        mail = self.mail_data["mail"]  
         if is_account_completed(mailadd):
             return True
 
@@ -81,6 +82,7 @@ class ReadOneMail:
             
             try:
                 eel.updateReadMailResult(
+                    mail,
                     mailadd,
                     from_name,
                     date_str,
@@ -116,6 +118,7 @@ class ReadOneMail:
                     "Lỗi đăng nhập",
                     "N/A",
                     "N/A",
+                    "N/A",
                     f"❌ Lỗi đăng nhập: {e}"
                 )
             except:
@@ -137,6 +140,7 @@ class ReadOneMail:
                         "Lỗi folder",
                         "N/A",
                         "N/A",
+                        "N/A",
                         "❌ Không thể chọn thư mục mail"
                     )
                 except:
@@ -152,6 +156,7 @@ class ReadOneMail:
                     self.mail_data['mail'],
                     time.strftime("%Y-%m-%d %H:%M"),
                     "Lỗi tìm mail",
+                    "N/A",
                     "N/A",
                     "N/A",
                     "❌ Không thể tìm thấy mail"
@@ -227,6 +232,7 @@ class ReadOneMail:
                     "Đã check xong",
                     "N/A",
                     "N/A",
+                    "N/A",
                     "❌ Không tìm thấy code"
                 )
                 print(f"[SUCCESS] Đã update account {mailadd} (không có code) lên treeview")
@@ -293,6 +299,7 @@ def start_read_mail(data):
                             account_data['mail'],
                             time.strftime("%Y-%m-%d %H:%M"),
                             "Chưa xử lý",
+                            "N/A",
                             "N/A",
                             "N/A",
                             "⚠️ Account chưa được xử lý"
