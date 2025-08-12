@@ -77,8 +77,10 @@ function updateReadMailResult(mailadd, from_name, date_str, subject, uid, code, 
             tbody.innerHTML = "";
         }
     }
-    
-    readMailRowCounter++;
+
+    // Tìm index của mail trong mailOrder
+    const mailInfo = mailOrder.find(m => m.mailadd === mailadd);
+    const orderIndex = mailInfo ? mailInfo.index : -1;
     
     // Xác định màu sắc cho status
     let statusColor = "#28a745"; // xanh lá (thành công)
@@ -97,8 +99,10 @@ function updateReadMailResult(mailadd, from_name, date_str, subject, uid, code, 
     }
     
     const row = document.createElement("tr");
+    row.setAttribute('data-order', orderIndex);
     row.innerHTML = `
-        <td>${readMailRowCounter}</td>
+        <td>${orderIndex + 1}</td>
+        <td>${mailInfo ? mailInfo.mail : mailadd}</td>
         <td>${mailadd}</td>
         <td>${from_name}</td>
         <td>${date_str}</td>
@@ -107,8 +111,18 @@ function updateReadMailResult(mailadd, from_name, date_str, subject, uid, code, 
         <td style="color: ${codeColor}; font-weight: bold;">${codeText}</td>
         <td style="color: ${statusColor}; font-weight: bold; font-size: 12px;">${status}</td>
     `;
-    
-    tbody.appendChild(row);
+
+    // Chèn row vào đúng vị trí
+    const rows = Array.from(tbody.children);
+    const insertIndex = rows.findIndex(r => 
+        parseInt(r.getAttribute('data-order')) > orderIndex
+    );
+
+    if (insertIndex === -1) {
+        tbody.appendChild(row);
+    } else {
+        tbody.insertBefore(row, rows[insertIndex]);
+    }
     
     console.log(`[JS] Updated treeview for ${mailadd}: ${status}`);
 }
@@ -118,6 +132,9 @@ function resetReadMailCounter() {
     readMailRowCounter = 0;
 }
 
+let mailOrder = [];
+
+// Sửa lại hàm startReadMail để lưu thứ tự mail
 async function startReadMail() {
     let input = document.getElementById("read-mail-input").value.trim();
     let threadInput = document.getElementById("read-mail-thread-count");
@@ -137,15 +154,19 @@ async function startReadMail() {
         let tbody = document.getElementById("read-mail-tbody");
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">⏳ Đang đọc...</td></tr>`;
 
-        // Tách dữ liệu thành mảng accounts
+        // Lưu thứ tự mail từ input
+        mailOrder = [];
         const accounts = [];
-        input.split("\n").forEach(line => {
+        input.split("\n").forEach((line, index) => {
             let parts = line.trim().split("|");
             if (parts.length >= 3) {
+                const mail = parts[0].trim();
+                const mailadd = parts[2].trim();
+                mailOrder.push({mail, mailadd, index});
                 accounts.push({
-                    mail: parts[0],
+                    mail: mail,
                     pass: parts[1],
-                    mailadd: parts[2]
+                    mailadd: mailadd
                 });
             }
         });
