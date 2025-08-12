@@ -40,8 +40,8 @@ function exportReadMailData() {
         const values = [
             tds[1]?.textContent.trim() || "", // mailadd
             tds[2]?.textContent.trim() || "", // mailadd
-            tds[6]?.textContent.trim() || "", // uid
-            tds[7]?.textContent.trim() || "", // code
+            tds[7]?.textContent.trim() || "", // uid
+            tds[8]?.textContent.trim() || "", // code
         ];
         // Chỉ lấy những dòng có ít nhất một giá trị
         return values.some(v => v !== "") ? values.join('|') : null;
