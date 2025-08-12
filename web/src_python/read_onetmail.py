@@ -81,9 +81,9 @@ class ReadOneMail:
             id_val = match.group(2)
             
             try:
+                # Thay đổi thứ tự tham số để khớp với JS
                 eel.updateReadMailResult(
-                    mail,
-                    mailadd,
+                    mailadd,      # mailadd first
                     from_name,
                     date_str,
                     subject,
@@ -223,19 +223,17 @@ class ReadOneMail:
 
         # ĐÂY LÀ PHẦN QUAN TRỌNG: Đảm bảo tất cả account đều được update lên treeview
         if not found_code:
-            print(f"[INFO] Account {mailadd} không tìm thấy code, đang update lên treeview...")
             try:
+                # Cập nhật thứ tự tham số này cũng vậy
                 eel.updateReadMailResult(
                     mailadd,
-                    self.mail_data['mail'],
+                    "N/A",        # from_name
                     time.strftime("%Y-%m-%d %H:%M"),
                     "Đã check xong",
-                    "N/A",
-                    "N/A",
-                    "N/A",
+                    "N/A",        # uid
+                    "N/A",        # code
                     "❌ Không tìm thấy code"
                 )
-                print(f"[SUCCESS] Đã update account {mailadd} (không có code) lên treeview")
             except Exception as e:
                 print(f"[ERROR] Lỗi cập nhật UI cho mail không có code {mailadd}: {e}")
             print(f"[WARNING] Không tìm thấy code cho {mailadd}")

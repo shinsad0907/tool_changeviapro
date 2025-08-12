@@ -40,8 +40,8 @@ function exportReadMailData() {
         const values = [
             tds[1]?.textContent.trim() || "", // mailadd
             tds[2]?.textContent.trim() || "", // mailadd
-            tds[7]?.textContent.trim() || "", // uid
-            tds[8]?.textContent.trim() || "", // code
+            tds[6]?.textContent.trim() || "", // uid
+            tds[7]?.textContent.trim() || "", // code
         ];
         // Chỉ lấy những dòng có ít nhất một giá trị
         return values.some(v => v !== "") ? values.join('|') : null;
@@ -78,53 +78,53 @@ function updateReadMailResult(mailadd, from_name, date_str, subject, uid, code, 
         }
     }
 
-    // Tìm index của mail trong mailOrder
+    // Tìm thông tin mail dựa trên mailadd
     const mailInfo = mailOrder.find(m => m.mailadd === mailadd);
     const orderIndex = mailInfo ? mailInfo.index : -1;
     
-    // Xác định màu sắc cho status
-    let statusColor = "#28a745"; // xanh lá (thành công)
-    if (status.includes("❌")) {
-        statusColor = "#dc3545"; // đỏ (lỗi)
-    } else if (status.includes("⚠️")) {
-        statusColor = "#ffc107"; // vàng (cảnh báo)
-    }
+    // Xác định màu sắc
+    const statusColor = status.includes("❌") ? "#dc3545" : 
+                       status.includes("⚠️") ? "#ffc107" : "#28a745";
     
-    // Xác định màu cho code
-    let codeColor = "#28a745";
-    let codeText = code;
-    if (code === "N/A" || !code) {
-        codeColor = "#6c757d"; // xám
-        codeText = "N/A";
-    }
-    
+    const uidColor = uid !== "N/A" ? "#28a745" : "#6c757d";
+    const codeColor = code !== "N/A" ? "#28a745" : "#6c757d";
+
     const row = document.createElement("tr");
+    row.setAttribute('data-mailadd', mailadd);
     row.setAttribute('data-order', orderIndex);
+    
     row.innerHTML = `
         <td>${orderIndex + 1}</td>
-        <td>${mailInfo ? mailInfo.mail : mailadd}</td>
+        <td>${mailInfo ? mailInfo.mail : 'N/A'}</td>
         <td>${mailadd}</td>
         <td>${from_name}</td>
         <td>${date_str}</td>
-        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${subject}">${subject}</td>
-        <td style="color: ${codeColor}; font-weight: bold;">${uid}</td>
-        <td style="color: ${codeColor}; font-weight: bold;">${codeText}</td>
-        <td style="color: ${statusColor}; font-weight: bold; font-size: 12px;">${status}</td>
+        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
+            title="${subject}">${subject}</td>
+        <td style="color: ${uidColor};">${uid}</td>
+        <td style="color: ${codeColor};">${code}</td>
+        <td style="color: ${statusColor};">${status}</td>
     `;
 
-    // Chèn row vào đúng vị trí
+    // Tìm và thay thế row cũ nếu đã tồn tại
+    const existingRow = tbody.querySelector(`tr[data-mailadd="${mailadd}"]`);
+    if (existingRow) {
+        tbody.replaceChild(row, existingRow);
+        return;
+    }
+
+    // Chèn row mới vào đúng vị trí theo orderIndex
     const rows = Array.from(tbody.children);
-    const insertIndex = rows.findIndex(r => 
-        parseInt(r.getAttribute('data-order')) > orderIndex
-    );
+    const insertIndex = rows.findIndex(r => {
+        const rowOrder = parseInt(r.getAttribute('data-order'));
+        return rowOrder > orderIndex;
+    });
 
     if (insertIndex === -1) {
         tbody.appendChild(row);
     } else {
         tbody.insertBefore(row, rows[insertIndex]);
     }
-    
-    console.log(`[JS] Updated treeview for ${mailadd}: ${status}`);
 }
 
 // Reset counter khi bắt đầu đọc mail mới
